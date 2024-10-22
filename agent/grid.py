@@ -6,8 +6,8 @@ class Grid:
         self._size = size
         self.grid = grid
         self._stones = self._set_stones()
-        self._food = []
-        self._super_food = []
+        self._food = set() 
+        self._super_food = set()
         self._traverse = traverse 
         
     
@@ -49,23 +49,46 @@ class Grid:
         self._update_foods(pos, sight)
         
 
-    def _set_stones(self):
-        # TODO 
-        # Get stones from the grid
-        # If a Tile in the grid == Tiles.STONE
-        # Retrieve the STONE position
-        self._stones = []
+    def _set_stones(self) -> set: 
+        """
+        Initialize the positions of stones on the grid.
+        This is called once during initialization and does not change.
+        """
+        stones = set()
+        for x in range(self.hor_tiles):
+            for y in range(self.ver_tiles):
+                if self.grid[x][y] == Tiles.STONE:
+                    stones.add((x, y))  # Store stone positions
+        return stones
         
     
     def _update_foods(self, pos: tuple[int, int], sight: dict):
-        # TODO
-        # Update food and super food position
-        # Search for Tiles.FOOD | Tiles.SUPER
-        # In case snake pos is equal to FOOD or SUPER FOOD remove it
-        # Update grid
-        pass
-        
- 
+        """
+        Updates the food and super food position on grid.
+        """
+        # sight': {'6': {'17': 0}, '7': {'15': 1, '16': 0, '17': 0, '18': 0, '19': 0}
+        for x, y_tile in sight.items():
+            for y, tile in y_tile.items():
+
+                # Mark food and super_food 
+                if tile == Tiles.FOOD:
+                    self._food.add((x, y))
+                    self.grid[x][y] = Tiles.FOOD  
+                
+                elif tile == Tiles.SUPER:
+                    self._super_food.add((x, y)) 
+                    self.grid[x][y] = Tiles.SUPER
+
+
+                # Eat food and super_food
+                elif pos == (x, y) and tile in [Tiles.FOOD, Tiles.SUPER]:
+                    if tile == Tiles.FOOD:
+                        self._food.discard((x, y))  
+                    elif tile == Tiles.SUPER:
+                        self._super_food.discard((x, y))  
+                    self.grid[x][y] = Tiles.PASSAGE  # Update grid to passage
+    
+
     def get_tile(self, pos: tuple[int, int]):
         x, y = pos
         return self.grid[x][y]

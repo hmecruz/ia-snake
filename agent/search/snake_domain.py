@@ -21,6 +21,17 @@ class SnakeDomain(SearchDomain):
             )
         
     def cost(self, state, action):
-        # Todo
+        # Cost is always one for now
+        # Action is a move from a node to the next or previous node
+        # Equivalent to moving in one of 3 directions (Can't move backward)
         pass
         
+
+    def heuristic(self, state, goal):
+        # Manhatam distance 
+        # We can add more heuristic and do the Max euristic (thereotical classes)
+        pass
+
+    def satisfies(self, state, goal):
+        # Test if the state and the goal are equal
+        pass

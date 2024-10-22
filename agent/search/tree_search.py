@@ -6,6 +6,10 @@
 #    SearchProblem - concrete problems to be solved
 #    SearchNode    - search tree nodes
 #    SearchTree    - search tree with the necessary methods for searhing
+#
+#  (c) Luis Seabra Lopes
+#  Introducao a Inteligencia Artificial, 2012-2020,
+#  Inteligência Artificial, 2014-2023
 
 
 from abc import ABC, abstractmethod
