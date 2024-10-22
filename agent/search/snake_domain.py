@@ -8,11 +8,11 @@ class SnakeDomain(SearchDomain):
     def __init__(self, snake: Snake, grid: Grid):
         self.snake = snake
         self.grid = grid
+        
 
     def actions(self) -> list[Vector]:
         actions = [Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST]
         possible_actions = set()
-
 
         for action in actions:
             if self.is_action_valid(action):
@@ -21,26 +21,23 @@ class SnakeDomain(SearchDomain):
         return possible_actions
 
         
-    def result(self, action):
-        return self.grid.calc_pos(self.snake.position, action,self.grid.traverse)
+    def result(self, action: Direction) -> tuple[int, int]:
+        # Return the new position of the snake
+        return self.grid.calc_pos(self.snake.position, action, self.grid.traverse)
         
         
-    def cost(self, state, action):
-        # Cost is always one for now
-        # Action is a move from a node to the next or previous node
-        # Equivalent to moving in one of 3 directions (Can't move backward)
-        pass
+    def cost(self, state: tuple[int, int], action: Direction) -> int:
+        return 1
         
 
-    def heuristic(self, state, goal):
-        # Manhatam distance 
-        # We can add more heuristic and do the Max euristic (thereotical classes)
-        pass
+    def heuristic(self, state: tuple[int, int], goal: tuple[int, int]) -> int:
+        # Manhattan distance heuristic
+        return abs(state[0] - goal[0]) + abs(state[1] - goal[1])
 
-    def satisfies(self, state, goal):
+    
+    def satisfies(self, state: tuple[int, int], goal: tuple[int, int]) -> bool:
         # Test if the state and the goal are equal
-        pass
-
+        return state == goal
 
 
     def is_action_valid(self, action: Direction) -> bool:

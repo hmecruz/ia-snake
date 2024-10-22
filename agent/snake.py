@@ -63,3 +63,13 @@ class Snake:
         self.body = body
         self.sight = sight
         self.range = range
+
+
+    def move(self, direction: Direction) -> str:
+        direction_to_key = {
+            Direction.NORTH: 'w',
+            Direction.EAST: 'd',
+            Direction.SOUTH: 's',
+            Direction.WEST: 'a'
+        }
+        return direction_to_key.get(direction, '')
