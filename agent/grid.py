@@ -5,40 +5,67 @@ class Grid:
     def __init__(self, size: tuple[int, int], grid: list[list], traverse: bool):
         self._size = size
         self.grid = grid
-        self._stones = []
-        self._foods = []
-        self._super_foods = []
+        self._stones = self._set_stones()
+        self._food = []
+        self._super_food = []
         self._traverse = traverse 
         
     
     @property
     def hor_tiles(self):
-        return self.size[0]
+        return self._size[0]
 
     @property
     def ver_tiles(self):
-        return self.size[1]
+        return self._size[1]
 
     @property
     def size(self):
-        return self.size
+        return self._size
 
     @property
     def stones(self):
-        return self.stones
+        return self._stones
 
     @property
     def foods(self):
-        return self.foods
+        return self._food
     
     @property
-    def super_foods(self):
-        return self.super_foods
+    def super_food(self):
+        return self._super_food
 
     @property
     def traverse(self):
         return self._traverse
+    
+    @traverse.setter
+    def traverse(self, traverse: bool):
+        self._traverse = traverse
 
+
+    def update(self, pos: tuple[int, int], sight: dict, traverse: bool):
+        self.traverse(traverse)
+        self._update_foods(pos, sight)
+        
+
+    def _set_stones(self):
+        # TODO 
+        # Get stones from the grid
+        # If a Tile in the grid == Tiles.STONE
+        # Retrieve the STONE position
+        self._stones = []
+        
+    
+    def _update_foods(self, pos: tuple[int, int], sight: dict):
+        # TODO
+        # Update food and super food position
+        # Search for Tiles.FOOD | Tiles.SUPER
+        # In case snake pos is equal to FOOD or SUPER FOOD remove it
+        # Update grid
+        pass
+        
+ 
     def get_tile(self, pos: tuple[int, int]):
         x, y = pos
         return self.grid[x][y]

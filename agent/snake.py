@@ -21,7 +21,7 @@ class Snake:
         return self.direction
     
     @direction.setter
-    def position(self, new_direction: Direction):
+    def direction(self, new_direction: Direction):
         self.direction = new_direction
 
     @property
@@ -47,3 +47,19 @@ class Snake:
     @range.setter
     def range(self, new_range: int):
         self._range = new_range
+
+    
+    def update(
+            self, 
+            pos: tuple[int, int], 
+            dir: Direction, 
+            body: list[tuple[int, int]], 
+            sight: dict, 
+            range: int
+        ):
+        
+        self.position = pos
+        self.direction = dir
+        self.body = body
+        self.sight = sight
+        self.range = range
