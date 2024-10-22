@@ -8,7 +8,7 @@ class SnakeDomain(SearchDomain):
     def __init__(self, snake: Snake, grid: Grid):
         self.snake = snake
         self.grid = grid
-        
+
 
     def actions(self) -> list[Vector]:
         actions = [Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST]

@@ -2,13 +2,13 @@ import math
 from consts import Tiles, Direction, Vector
 
 class Grid:
-    def __init__(self, size: tuple[int, int], grid: list[list], traverse: bool):
+    def __init__(self, size: tuple[int, int], grid: list[list]):
         self._size = size
         self.grid = grid
         self._stones = self._set_stones()
         self._food = set() 
         self._super_food = set()
-        self._traverse = traverse 
+        self._traverse = None
         
     
     @property
@@ -44,8 +44,8 @@ class Grid:
         self._traverse = traverse
 
 
-    def update(self, pos: tuple[int, int], sight: dict, traverse: bool):
-        self.traverse(traverse)
+    def update(self, pos: tuple[int, int], sight: dict, traverse: bool):    
+        self.traverse = traverse
         self._update_foods(pos, sight)
         
 
