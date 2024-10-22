@@ -1,4 +1,4 @@
-from enum import IntEnum
+from enum import Enum, IntEnum
 
 HISTORY_LEN = 10
 
@@ -39,3 +39,10 @@ class Direction(IntEnum):
     EAST = 1
     SOUTH = 2
     WEST = 3
+    
+
+class Vector(Enum):
+    NORTH = (0, -1)
+    SOUTH = (0, 1)
+    WEST = (-1, 0)
+    EAST = (1, 0)
