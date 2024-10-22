@@ -127,9 +127,7 @@ class Grid:
         assert False, "Unknown tile type"
         
 
-    # TODO
-    # Change calc_pos to use Vector instead of Direction
-    def calc_pos(self, cur, direction: Direction, traverse=False):
+    def calc_pos(self, cur: tuple[int, int], direction: Direction, traverse: bool = False):
         cx, cy = cur
         npos = cur
         if direction == Direction.NORTH:

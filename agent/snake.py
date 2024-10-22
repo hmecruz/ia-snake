@@ -2,27 +2,27 @@ from consts import Direction
 
 class Snake:
     def __init__(self):
-        self.pos = None # Head position
-        self.dir = None 
+        self._pos = None # Head position
+        self._dir = None 
         self._body = None
         self._sight = None
         self._range = None
     
     @property
     def position(self):
-        return self.pos
+        return self._pos
     
     @position.setter
     def position(self, new_position: tuple[int, int]):
-        self.pos = new_position
+        self._pos = new_position
         
     @property
     def direction(self):
-        return self.direction
+        return self._dir
     
     @direction.setter
     def direction(self, new_direction: Direction):
-        self.direction = new_direction
+        self._dir = new_direction
 
     @property
     def body(self):
