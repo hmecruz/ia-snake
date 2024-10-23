@@ -1,7 +1,7 @@
-from tree_search import SearchDomain
-from grid import Grid
-from snake import Snake
-from consts import Direction, Vector
+from .tree_search import SearchDomain
+from ..grid import Grid
+from ..snake import Snake
+from consts import Direction
 
 class SnakeDomain(SearchDomain):
     
@@ -10,7 +10,7 @@ class SnakeDomain(SearchDomain):
         self.grid = grid
 
 
-    def actions(self) -> list[Vector]:
+    def actions(self) -> list[Direction]:
         actions = [Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST]
         possible_actions = set()
 

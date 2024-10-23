@@ -4,10 +4,14 @@ import json
 import os
 import websockets
 
-from .snake import Snake
-from .grid import Grid
+from agent.snake import Snake
+from agent.grid import Grid
 
-from .utils.utils import determine_direction
+from agent.search.tree_search import *
+from agent.search.snake_domain import SnakeDomain
+from agent.search.snake_problem import SnakeProblem
+
+from agent.utils.utils import determine_direction
 
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
@@ -21,10 +25,18 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         snake = Snake()
         grid = Grid(size, grid)
 
+        # Get the initial and goal position
+        # Use a search algorithm to reach the goal position from the initial position
+        snake_domain = SnakeDomain(snake, grid)
+        snake_problem = SnakeProblem(snake, grid)
+        initial, goal = snake_problem.problem()
+        search_problem = SearchProblem(snake_domain, initial, goal)
+        search_tree = SearchTree(search_problem, strategy=None) # Specify the search algorithm
+        path = search_tree.search(limit=None) # Specify the limit if needed
+
         while True:
             try:
                 state = json.loads(await websocket.recv()) 
-                
                 update_snake_grid(state, snake, grid)
 
                 key = "w"

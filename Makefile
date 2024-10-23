@@ -3,4 +3,7 @@
 .PHONY: run
 
 run:
-	python -m agent.student
+	python3 student.py
+
+run_server:
+	SERVER=sokoban.av.it.pt PORT=80 NAME=dgomes python3 student.py
