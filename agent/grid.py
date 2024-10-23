@@ -1,14 +1,14 @@
 import math
-from consts import Tiles, Direction, Vector
+from consts import Tiles, Direction
 
 class Grid:
-    def __init__(self, size: tuple[int, int], grid: list[list], traverse: bool):
+    def __init__(self, size: tuple[int, int], grid: list[list]):
         self._size = size
         self.grid = grid
         self._stones = self._set_stones()
         self._food = set() 
         self._super_food = set()
-        self._traverse = traverse 
+        self._traverse = None
         
     
     @property
@@ -44,8 +44,8 @@ class Grid:
         self._traverse = traverse
 
 
-    def update(self, pos: tuple[int, int], sight: dict, traverse: bool):
-        self.traverse(traverse)
+    def update(self, pos: tuple[int, int], sight: dict, traverse: bool):    
+        self.traverse = traverse
         self._update_foods(pos, sight)
         
 
@@ -89,7 +89,7 @@ class Grid:
                     self.grid[x][y] = Tiles.PASSAGE  # Update grid to passage
     
 
-    def get_tile(self, pos: tuple[int, int]):
+    def get_tile(self, pos: tuple[int, int]) -> Tiles:
         x, y = pos
         return self.grid[x][y]
     
@@ -108,7 +108,7 @@ class Grid:
         return zone
 
 
-    def is_blocked(self, pos, traverse):
+    def is_blocked(self, pos: tuple[int, int], traverse: bool) -> bool:
         x, y = pos
         if not traverse and (
             x not in range(self.hor_tiles) or y not in range(self.ver_tiles)
@@ -127,9 +127,7 @@ class Grid:
         assert False, "Unknown tile type"
         
 
-    # TODO
-    # Change calc_pos to use Vector instead of Direction
-    def calc_pos(self, cur, direction: Direction, traverse=False):
+    def calc_pos(self, cur: tuple[int, int], direction: Direction, traverse: bool = False) -> tuple[int, int]:
         cx, cy = cur
         npos = cur
         if direction == Direction.NORTH:
