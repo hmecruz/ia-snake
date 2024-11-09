@@ -34,6 +34,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
             try:
                 print("\n--------------------------------------------\n")
                 state = json.loads(await websocket.recv()) 
+                prev_mode = snake.mode
                 update_snake_grid(state, snake, grid)
 
                 print(f"Snake Position: {snake.position}")
@@ -42,11 +43,13 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 print(f"Snake Mode: {snake.mode._name_}")
                 print(f"Foods: {grid.food}")
                 
+                if prev_mode != snake.mode:
+                    path = [] # Clear path if mode switches
 
                 if not path: # List if empty
                     if snake.mode == Mode.EXPLORATION: 
                         path = exploration.get_path(snake, grid) # Request a new path to follow
-                    if snake.mode == Mode.EATING:
+                    elif snake.mode == Mode.EATING:
                         path = eating.get_path(snake, grid) # Request a new path to follow
                     if path:
                         print(f"Path: {path}")
@@ -73,11 +76,11 @@ def update_snake_grid(state: dict, snake: Snake, grid: Grid):
     sight = convert_sight(sight) 
     range = state["range"]
     traverse = state["traverse"]
-    mode = snake_mode(grid)
     
     # Always update snake first
-    snake.update(pos, direction, body, sight, range, mode)
+    snake.update(pos, direction, body, sight, range)
     grid.update(pos, body, snake.sight, traverse)
+    snake.mode = snake_mode(grid)
 
 
 def snake_mode(grid: Grid):
