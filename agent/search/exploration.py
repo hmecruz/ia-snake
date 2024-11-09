@@ -12,7 +12,7 @@ class Exploration():
 
         queue = deque([(snake.position, snake.direction)])  # Queue holds (position, direction)
         visited = set([snake.position])  # Visited positions
-        came_from = {}  # Tracks the path
+        came_from = {} # Tracks the path
 
         while queue:
             current_pos, current_direction = queue.popleft()
