@@ -8,6 +8,7 @@ from agent.snake import Snake
 from agent.grid import Grid
 
 from agent.search.exploration import Exploration
+from agent.search.eating import Eating
 
 from agent.utils.utils import determine_direction, convert_sight
 
@@ -25,6 +26,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         snake = Snake()
         grid = Grid(size, grid)
         exploration = Exploration()
+        eating = Eating()
 
         path = []
         
@@ -37,9 +39,15 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 print(f"Snake Position: {snake.position}")
                 print(f"Snake Direction: {snake.direction._name_}")
                 print(f"Grid Traverse: {grid.traverse}")
-   
+                print(f"Snake Mode: {snake.mode._name_}")
+                print(f"Foods: {grid.food}")
+                
+
                 if not path: # List if empty
-                    path = exploration.get_path(snake, grid) # Request a new path to follow
+                    if snake.mode == Mode.EXPLORATION: 
+                        path = exploration.get_path(snake, grid) # Request a new path to follow
+                    if snake.mode == Mode.EATING:
+                        path = eating.get_path(snake, grid) # Request a new path to follow
                     if path:
                         print(f"Path: {path}")
                 
@@ -65,10 +73,17 @@ def update_snake_grid(state: dict, snake: Snake, grid: Grid):
     sight = convert_sight(sight) 
     range = state["range"]
     traverse = state["traverse"]
+    mode = snake_mode(grid)
     
     # Always update snake first
-    snake.update(pos, direction, body, sight, range, mode=Mode.EXPLORATION)
+    snake.update(pos, direction, body, sight, range, mode)
     grid.update(pos, body, snake.sight, traverse)
+
+
+def snake_mode(grid: Grid):
+    if grid.food:
+        return Mode.EATING
+    return Mode.EXPLORATION
             
 # DO NOT CHANGE THE LINES BELLOW
 # You can change the default values using the command line, example:
