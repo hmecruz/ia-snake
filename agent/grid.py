@@ -11,7 +11,8 @@ class Grid:
         self._food = set() 
         self._super_food = set()
         self._traverse = None
-        
+        self.ate_food = False
+
     def __repr__(self):
         return f"Grid(size={self.size}, stones={len(self.stones)} stones, food={len(self.food)} items, super_food={len(self.super_food)} items)"
 
@@ -97,17 +98,16 @@ class Grid:
                     self.grid[x][y] = Tiles.SUPER
         
         # Eat food and super_food
-        pos_tile = self.get_tile(pos) 
-        if pos_tile == Tiles.FOOD:
-            self._food.discard(pos)  
+        if pos in self.food:
+            self.food.discard(pos)  
             self.clear_visited_tiles() # Clear all visited cells
             return True
-        elif pos_tile == Tiles.SUPER:
-            self._super_food.discard(pos)  
-            self.clear_visited_tiles() # Clear all visited cells
-            return True
-        
+        elif pos in self.super_food:
+            self.super_food.discard(pos)  
+            #self.clear_visited_tiles() # Clear all visited cells
+            # TODO Add a different logic for super food snake may not increase size
         return False
+
 
     def _update_snake_body(self, pos: tuple[int, int], body: list[list[int]], prev_tail: tuple[int, int], eat_food: bool):
         if not prev_tail: # Initial setup of the body 
@@ -116,14 +116,16 @@ class Grid:
                 if self.get_tile(segment) == Tiles.STONE: continue
                 self.grid[x][y] = Tiles.SNAKE # Mark each body segment
             return
-        
+    
         if self.get_tile(pos) != Tiles.STONE:
             head_x, head_y = pos
             self.grid[head_x][head_y] = Tiles.SNAKE # Mark head
 
-        if not eat_food and self.get_tile(prev_tail) != Tiles.STONE:
+        if not self.ate_food and self.get_tile(prev_tail) != Tiles.STONE:
             prev_tail_x, prev_tail_y = prev_tail
             self.grid[prev_tail_x][prev_tail_y] = Tiles.VISITED # Remove Tail
+
+        self.ate_food = True if eat_food == True else False
 
 
     def _set_visited_tiles(self, sight: dict[int, dict[int, Tiles]]):
@@ -177,8 +179,10 @@ class Grid:
 
         if tile_type in [Tiles.PASSAGE, Tiles.VISITED]:
             return False
-        if tile_type == Tiles.STONE or tile_type == Tiles.SNAKE:
+        if tile_type == Tiles.STONE:
             return not self.traverse
+        if tile_type == Tiles.SNAKE:
+            return True # TODO Implement a strategy for when snake is on top of stone
         if tile_type in [Tiles.FOOD, Tiles.SUPER]:
             return False
 

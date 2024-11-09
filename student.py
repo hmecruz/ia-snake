@@ -44,6 +44,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 print(f"Grid Traverse: {grid.traverse}")
                 print(f"Snake Mode: {snake.mode._name_}")
                 print(f"Foods: {grid.food}")
+                print(f"Snake Body: {snake.body}")
                 
                 if prev_mode != snake.mode:
                     path = [] # Clear path if mode switches
