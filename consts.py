@@ -8,6 +8,7 @@ MAX_LEN_ROPE = 3
 MIN_ENEMIES = 3
 
 VITAL_SPACE = 3
+NEST_SIZE = 3
 
 TIMEOUT = 3000
 
@@ -18,6 +19,7 @@ class Tiles(IntEnum):
     FOOD = 2
     SUPER = 3
     SNAKE = 4
+    VISITED = 5
 
 
 class SuperFood(IntEnum):
@@ -41,8 +43,8 @@ class Direction(IntEnum):
     WEST = 3
     
 
-class Vector(Enum):
-    NORTH = (0, -1)
-    SOUTH = (0, 1)
-    WEST = (-1, 0)
-    EAST = (1, 0)
+class Mode(IntEnum):
+    EXPLORATION = 0 # Searching for food or enemy snake 
+    EATING = 1 # Trying to reach food
+    ATTACK = 2 # Attack other snakes
+    DEFEND = 3 # Defend against other snakes
