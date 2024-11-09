@@ -96,12 +96,12 @@ class Grid:
                     self.grid[x][y] = Tiles.SUPER
         
         # Eat food and super_food
-        tile = self.get_tile(pos) 
-        if tile == Tiles.FOOD:
-            self._food.discard((x, y))  
+        pos_tile = self.get_tile(pos) 
+        if pos_tile == Tiles.FOOD:
+            self._food.discard(pos)  
             self.clear_visited_tiles() # Clear all visited cells
-        elif tile == Tiles.SUPER:
-            self._super_food.discard((x, y))  
+        elif pos_tile == Tiles.SUPER:
+            self._super_food.discard(pos)  
             self.clear_visited_tiles() # Clear all visited cells
     
 

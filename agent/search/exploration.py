@@ -7,7 +7,6 @@ class Exploration():
     def __init__(self, actions: list[Direction] = [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH]):
         self.actions = actions
 
-
     def get_path(self, snake: Snake, grid: Grid) -> list[tuple[int, int]]:
         """Find the shortest path from the snake's current position to the closest Tiles.PASSAGE tile using BFS."""
 
@@ -84,7 +83,7 @@ class Exploration():
             if action == map_opposite_direction.get(current_direction):
                 continue
             
-            new_position = self.grid.calculate_pos(current_pos, action)
+            new_position = grid.calculate_pos(current_pos, action)
             if current_pos != new_position:
                 possible_actions.add(action)
 

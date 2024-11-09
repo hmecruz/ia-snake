@@ -4,21 +4,23 @@ from consts import Tiles, Direction
 from ..snake import Snake
 from ..grid import Grid
 
-class AStarEating():
+class Eating():
     def __init__(self, actions: list[Direction] = [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH]):
         self.actions = actions
 
     def get_path(self, snake: Snake, grid: Grid) -> list[tuple[int, int]]:
-        """Find the shortest path from the snake's current position to the first reachable Tiles.PASSAGE tile."""
-
+        """Find the shortest path from the snake's current position to the closest reachable food"""
+        
+        goal = self.find_closest_food(snake.position, grid.food)
+        if not goal: raise ValueError(f"No food found in {grid.food}")
+            
         open_list = []
-        heapq.heappush(open_list, (0, snake.position, snake.direction))  # (f_cost, position, direction)        closed_list = set() # Visited positions
+        heapq.heappush(open_list, (0, snake.position, snake.direction))  # (f_cost, position, direction)
         closed_list = set() # Visited positions
-
 
         came_from = {}
         g_costs = {snake.position: 0} # Actual cost from the start cell to each cell
-        f_costs = {snake.position: self.heuristic(snake.position, grid)} # g_score + heuristic
+        f_costs = {snake.position: self.heuristic(snake.position, goal)} # g_score + heuristic
 
         while open_list:
             _, current_pos, current_direction = heapq.heappop(open_list) # Pop node with the lowest f_score from heap
@@ -27,7 +29,7 @@ class AStarEating():
                 continue # Position has already been visited
                 
             # Check if the current position is a passage tile 
-            if grid.get_tile(current_pos) == Tiles.PASSAGE:
+            if current_pos == goal:
                 return self.reconstruct_path(came_from, current_pos)
             
             closed_list.add(current_pos) # Add current position to visited 
@@ -42,7 +44,7 @@ class AStarEating():
                 if neighbour not in g_costs or tentative_g_cost < g_costs[neighbour]:
                     came_from[neighbour] = current_pos
                     g_costs[neighbour] = tentative_g_cost
-                    f_cost = tentative_g_cost + self.heuristic(neighbour, grid)
+                    f_cost = tentative_g_cost + self.heuristic(neighbour, goal)
                     f_costs[neighbour] = f_cost
                     heapq.heappush(open_list, (f_cost, neighbour, neighbour_dir))
 
@@ -64,7 +66,7 @@ class AStarEating():
             if action == map_opposite_direction.get(current_direction): # Snake can't move to the opposite direction of its current direction
                 continue
 
-            new_position = grid.calc_pos(current_pos, action, grid.traverse)
+            new_position = grid.calculate_pos(current_pos, action)
             if current_pos != new_position:
                 neighbours.add((new_position, action))
                 
@@ -78,16 +80,17 @@ class AStarEating():
             current = came_from[current]
         path.reverse()
         return path
+    
+
+    def find_closest_food(self, cur_pos: tuple[int, int], food_positions: set[tuple[int, int]]) -> tuple[int, int] | None:
+        """Find the closest food position to the start position"""
+        if not food_positions:
+            return None
+        return min(food_positions, key=lambda pos: self.heuristic(cur_pos, pos))
 
     
-    def heuristic(self, position: tuple[int, int], grid: Grid) -> int:
-        x, y = position
-        return min(
-            abs(x - i) + abs(y - j)
-            for i in range(grid.hor_tiles)
-            for j in range(grid.ver_tiles)
-            if grid.get_tile((i, j)) == Tiles.PASSAGE
-        )
+    def heuristic(self, pos: tuple[int, int], goal: tuple[int, int]) -> int:
+        return abs(pos[0] - goal[0]) + abs(pos[1] - goal[1])
     
 
     
