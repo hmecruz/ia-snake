@@ -12,6 +12,7 @@ class Grid:
         self._super_food = set()
         self._traverse = None
         self.ate_food = False
+        self.ate_super_food = False
 
     def __repr__(self):
         return f"Grid(size={self.size}, stones={len(self.stones)} stones, food={len(self.food)} items, super_food={len(self.super_food)} items)"
@@ -79,9 +80,9 @@ class Grid:
 
     def update(self, pos: tuple[int, int], body: list[list[int]], prev_tail: tuple[int, int], sight: dict[int, dict[int, Tiles]], traverse: bool):    
         self.traverse = traverse
-        eat_food = self._update_food(pos, sight)
+        eat_food, eat_super_food = self._update_food(pos, sight)
         self._set_visited_tiles(sight) 
-        self._update_snake_body(pos, body, prev_tail, eat_food)
+        self._update_snake_body(pos, body, prev_tail, eat_food, eat_super_food)
         
     
     def _update_food(self, pos: tuple[int, int], sight: dict[int, dict[int, Tiles]]) -> bool:
@@ -101,21 +102,35 @@ class Grid:
         if pos in self.food:
             self.food.discard(pos)  
             self.clear_visited_tiles() # Clear all visited cells
-            return True
+            return True, False
         elif pos in self.super_food:
             self.super_food.discard(pos)  
-            #self.clear_visited_tiles() # Clear all visited cells
+            return False, True
             # TODO Add a different logic for super food snake may not increase size
-        return False
+        return False, False
 
 
-    def _update_snake_body(self, pos: tuple[int, int], body: list[list[int]], prev_tail: tuple[int, int], eat_food: bool):
+    def _update_snake_body(self, pos: tuple[int, int], body: list[list[int]], prev_tail: tuple[int, int], eat_food: bool, eat_super_food: bool):
         if not prev_tail: # Initial setup of the body 
             for segment in body:
                 x, y = segment
                 if self.get_tile(segment) == Tiles.STONE: continue
                 self.grid[x][y] = Tiles.SNAKE # Mark each body segment
             return
+        
+        
+        if self.ate_super_food:
+            # Clear previous snake from grid 
+            for x in range(self.hor_tiles):
+                for y in range(self.ver_tiles):
+                    if self.get_tile((x, y)) == Tiles.SNAKE:
+                        self.grid[x][y] = Tiles.VISITED
+            # Mark current snake in grid
+            for segment in body:
+                x, y = segment
+                if self.get_tile(segment) == Tiles.STONE: continue
+                self.grid[x][y] = Tiles.SNAKE # Mark each body segment
+            self.ate_super_food = True if eat_super_food == True else False
     
         if self.get_tile(pos) != Tiles.STONE:
             head_x, head_y = pos
