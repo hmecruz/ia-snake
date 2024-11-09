@@ -76,13 +76,14 @@ class Grid:
         return self.grid[x][y]
     
 
-    def update(self, pos: tuple[int, int], body: list[list[int]], sight: dict[int, dict[int, Tiles]], traverse: bool):    
+    def update(self, pos: tuple[int, int], body: list[list[int]], prev_tail: tuple[int, int], sight: dict[int, dict[int, Tiles]], traverse: bool):    
         self.traverse = traverse
-        self._update_food(pos, sight)
-        self._set_visited_tiles(body, sight) 
+        eat_food = self._update_food(pos, sight)
+        self._set_visited_tiles(sight) 
+        self._update_snake_body(pos, body, prev_tail, eat_food)
         
     
-    def _update_food(self, pos: tuple[int, int], sight: dict[int, dict[int, Tiles]]):
+    def _update_food(self, pos: tuple[int, int], sight: dict[int, dict[int, Tiles]]) -> bool:
         """Update the food and super food positions on the grid."""
         # sight': {6: {17: 0}, 7: {15: 1, 16: 0, 17: 0, 18: 0, 19: 0}
         for x, y_tile in sight.items():
@@ -100,18 +101,32 @@ class Grid:
         if pos_tile == Tiles.FOOD:
             self._food.discard(pos)  
             self.clear_visited_tiles() # Clear all visited cells
+            return True
         elif pos_tile == Tiles.SUPER:
             self._super_food.discard(pos)  
             self.clear_visited_tiles() # Clear all visited cells
-    
+            return True
+        
+        return False
 
-    def _set_visited_tiles(self, body: list[list[int]], sight: dict[int, dict[int, Tiles]]):
-        # Mark all cells as visited if our snake is on them except for stones
-        for segment in body:
-            x, y = segment
-            if self.get_tile(segment) == Tiles.STONE: continue
-            self.grid[x][y] = Tiles.VISITED
+    def _update_snake_body(self, pos: tuple[int, int], body: list[list[int]], prev_tail: tuple[int, int], eat_food: bool):
+        if not prev_tail: # Initial setup of the body 
+            for segment in body:
+                x, y = segment
+                if self.get_tile(segment) == Tiles.STONE: continue
+                self.grid[x][y] = Tiles.SNAKE # Mark each body segment
+            return
+        
+        if self.get_tile(pos) != Tiles.STONE:
+            head_x, head_y = pos
+            self.grid[head_x][head_y] = Tiles.SNAKE # Mark head
 
+        if not eat_food and self.get_tile(prev_tail) != Tiles.STONE:
+            prev_tail_x, prev_tail_y = prev_tail
+            self.grid[prev_tail_x][prev_tail_y] = Tiles.VISITED # Remove Tail
+
+
+    def _set_visited_tiles(self, sight: dict[int, dict[int, Tiles]]):
         # Mark all cells as visited within sight if they are passages
         for x, y_tile in sight.items():
             for y, tile in y_tile.items():
@@ -162,7 +177,7 @@ class Grid:
 
         if tile_type in [Tiles.PASSAGE, Tiles.VISITED]:
             return False
-        if tile_type == Tiles.STONE:
+        if tile_type == Tiles.STONE or tile_type == Tiles.SNAKE:
             return not self.traverse
         if tile_type in [Tiles.FOOD, Tiles.SUPER]:
             return False
@@ -195,12 +210,12 @@ class Grid:
     
     def print_grid(self):
         string_map_tile = {
-            Tiles.PASSAGE: "P",
+            Tiles.PASSAGE: " ",
             Tiles.STONE: "X", 
             Tiles.FOOD: "F",
             Tiles.SUPER: "S",
             Tiles.SNAKE: "B",
-            Tiles.VISITED: "V"
+            Tiles.VISITED: " "
         }
 
         for y in range(self.ver_tiles): 

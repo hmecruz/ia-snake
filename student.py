@@ -29,13 +29,15 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         eating = Eating()
 
         path = []
+        prev_tail = None
         
         while True:
             try:
                 print("\n--------------------------------------------\n")
                 state = json.loads(await websocket.recv()) 
                 prev_mode = snake.mode
-                update_snake_grid(state, snake, grid)
+                if snake.body: prev_tail = snake.body[-1]
+                update_snake_grid(state, snake, grid, prev_tail)
 
                 print(f"Snake Position: {snake.position}")
                 print(f"Snake Direction: {snake.direction._name_}")
@@ -67,7 +69,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 return
 
 
-def update_snake_grid(state: dict, snake: Snake, grid: Grid):
+def update_snake_grid(state: dict, snake: Snake, grid: Grid, prev_tail: tuple[int, int]):
     """Update the snake and grid objects based on the new game state."""
     body = state["body"]
     pos = tuple(body[0])
@@ -79,7 +81,7 @@ def update_snake_grid(state: dict, snake: Snake, grid: Grid):
     
     # Always update snake first
     snake.update(pos, direction, body, sight, range)
-    grid.update(pos, body, snake.sight, traverse)
+    grid.update(pos, body, prev_tail, snake.sight, traverse)
     snake.mode = snake_mode(grid)
 
 
@@ -87,6 +89,7 @@ def snake_mode(grid: Grid):
     if grid.food:
         return Mode.EATING
     return Mode.EXPLORATION
+
             
 # DO NOT CHANGE THE LINES BELLOW
 # You can change the default values using the command line, example:
