@@ -13,6 +13,7 @@ class Grid:
         self._traverse = None
         self.ate_food = False
         self.ate_super_food = False
+        self.counter = 0
 
     def __repr__(self):
         return f"Grid(size={self.size}, stones={len(self.stones)} stones, food={len(self.food)} items, super_food={len(self.super_food)} items)"
@@ -101,7 +102,9 @@ class Grid:
         # Eat food and super_food
         if pos in self.food:
             self.food.discard(pos)  
-            self.clear_visited_tiles() # Clear all visited cells
+            self.counter += 1
+            if self.counter % 2 == 0:
+                self.clear_visited_tiles() # Clear all visited cells
             return True, False
         elif pos in self.super_food:
             self.super_food.discard(pos)  
@@ -233,7 +236,7 @@ class Grid:
             Tiles.FOOD: "F",
             Tiles.SUPER: "S",
             Tiles.SNAKE: "B",
-            Tiles.VISITED: " "
+            Tiles.VISITED: "."
         }
 
         for y in range(self.ver_tiles): 
