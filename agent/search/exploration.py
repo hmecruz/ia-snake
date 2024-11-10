@@ -1,5 +1,7 @@
 from collections import deque
+
 from consts import Tiles, Direction
+
 from ..snake import Snake
 from ..grid import Grid
 
@@ -9,7 +11,6 @@ class Exploration():
 
     def get_path(self, snake: Snake, grid: Grid) -> list[tuple[int, int]]:
         """Find the shortest path from the snake's current position to the closest Tiles.PASSAGE tile using BFS."""
-
         queue = deque([(snake.position, snake.direction)])  # Queue holds (position, direction)
         visited = set([snake.position])  # Visited positions
         came_from = {} # Tracks the path

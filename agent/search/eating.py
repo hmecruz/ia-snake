@@ -1,6 +1,7 @@
 import heapq
 
 from consts import Direction
+
 from ..snake import Snake
 from ..grid import Grid
 
@@ -11,7 +12,7 @@ class Eating():
     def get_path(self, snake: Snake, grid: Grid) -> list[tuple[int, int]]:
         """Find the shortest path from the snake's current position to the closest reachable food"""
         
-        goal = self.find_closest_food(snake.position, grid.food, grid.size)
+        goal = self.find_goal(snake.position, grid.food, grid.super_food, grid.size, snake.eat_super_food)
         if not goal: raise ValueError(f"No food found in {grid.food}")
             
         open_list = []
@@ -62,11 +63,22 @@ class Eating():
         return path
     
 
-    def find_closest_food(self, cur_pos: tuple[int, int], food_positions: set[tuple[int, int]], grid_size: tuple[int, int]) -> tuple[int, int] | None:
+    def find_goal(self, 
+            cur_pos              : tuple[int, int], 
+            food_positions       : set[tuple[int, int]], 
+            super_food_positions : set[tuple[int, int]],
+            grid_size            : tuple[int, int],
+            eat_super_food       : bool
+            ) -> tuple[int, int] | None:
         """Find the closest food position to the start position"""
-        if not food_positions:
-            return None
-        return min(food_positions, key=lambda pos: self.heuristic(cur_pos, pos, grid_size))
+        
+        if not food_positions and not (eat_super_food and super_food_positions):
+            return None  # No food available to target
+
+        target_positions = food_positions | super_food_positions if eat_super_food else food_positions
+
+        # Return the closest position to cur_pos from the target positions
+        return min(target_positions, key=lambda pos: self.heuristic(cur_pos, pos, grid_size))
 
     
     def heuristic(self, pos: tuple[int, int], goal: tuple[int, int], grid_size: tuple[int, int]) -> int:

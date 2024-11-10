@@ -133,21 +133,20 @@ class Grid:
             for segment in body:
                 x, y = segment
                 self.grid[x][y] = Tiles.SNAKE # Mark each body segment
-            self.ate_super_food = True if eat_super_food == True else False
-            return 
-    
-        # Mark Head
-        head_x, head_y = pos
-        self.grid[head_x][head_y] = Tiles.SNAKE 
+        else:
+            # Mark Head
+            head_x, head_y = pos
+            self.grid[head_x][head_y] = Tiles.SNAKE 
 
-        # Remove Tail
-        prev_tail = prev_body[-1]
-        if not self.ate_food:
-            prev_tail_x, prev_tail_y = prev_tail
-            self.grid[prev_tail_x][prev_tail_y] = Tiles.VISITED if (prev_tail_x, prev_tail_y) not in self.stones else Tiles.STONE
+            # Remove Tail
+            prev_tail = prev_body[-1]
+            if not self.ate_food:
+                prev_tail_x, prev_tail_y = prev_tail
+                self.grid[prev_tail_x][prev_tail_y] = Tiles.VISITED if (prev_tail_x, prev_tail_y) not in self.stones else Tiles.STONE
 
         self.ate_food = True if eat_food == True else False
-
+        self.ate_super_food = True if eat_super_food == True else False
+        
 
     def _update_visited_tiles(self, sight: dict[int, dict[int, Tiles]]):
         # Mark all cells as visited within sight if they are passages
