@@ -66,7 +66,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     key = snake.move(direction)
             
                 print(f"Key: {key}")  
-                grid.print_grid()
+                grid.print_grid(snake.position)
                 await websocket.send(json.dumps({"cmd": "key", "key": key}))  
                 
             except websockets.exceptions.ConnectionClosedOK:
