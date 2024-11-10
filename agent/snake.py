@@ -10,6 +10,7 @@ class Snake:
         self._sight = None
         self._range = None
         self._mode = None
+        self._eat_super_food = False
     
     def __repr__(self):
         return (f"Snake(position={self.position}, direction={self.direction}, "
@@ -92,6 +93,16 @@ class Snake:
             raise ValueError(f"Invalid mode: Expected a Mode enum value, but received {new_mode}.")
         self._mode= new_mode
 
+    @property
+    def eat_super_food(self) -> bool:
+        return self._eat_super_food
+    
+    @eat_super_food.setter
+    def eat_super_food(self, eat_super_food: bool):
+        if not isinstance(eat_super_food, bool):
+            raise ValueError(f"Invalid eat_super_food: Expected a Boolean, but received {eat_super_food}.")
+        self._eat_super_food = eat_super_food
+
     
     def update(
             self, 
@@ -100,6 +111,7 @@ class Snake:
             body: list[list[int]], 
             sight: dict[int, dict[int, Tiles]], 
             range: int,
+            eat_super_food: bool = False
         ):
         
         self.position = pos
@@ -107,6 +119,7 @@ class Snake:
         self.body = body
         self.sight = sight
         self.range = range
+        self.eat_super_food = eat_super_food
 
 
     def move(self, direction: Direction) -> str:

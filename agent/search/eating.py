@@ -1,6 +1,7 @@
 import heapq
 
 from consts import Direction
+
 from ..snake import Snake
 from ..grid import Grid
 
@@ -11,7 +12,7 @@ class Eating():
     def get_path(self, snake: Snake, grid: Grid) -> list[tuple[int, int]]:
         """Find the shortest path from the snake's current position to the closest reachable food"""
         
-        goal = self.find_closest_food(snake.position, grid.food, grid.super_food, grid.size, grid.traverse, snake.range)
+        goal = self.find_goal(snake.position, grid.food, grid.super_food, grid.size, snake.eat_super_food)
         if not goal: raise ValueError(f"No food found in {grid.food}")
             
         open_list = []
@@ -35,7 +36,7 @@ class Eating():
             closed_list.add(current_pos) # Add current position to visited 
 
             # Explore neighbours
-            neighbours = self.get_neighbours(current_pos, current_direction, grid)
+            neighbours = grid.get_neighbours(self.actions, current_pos, current_direction)
 
             for neighbour, neighbour_dir in neighbours:
                 tentative_g_cost = g_costs[current_pos] + 1
@@ -52,27 +53,6 @@ class Eating():
         return None
     
 
-    def get_neighbours(self, current_pos: tuple[int, int], current_direction: Direction, grid: Grid) -> set[tuple[tuple[int, int], Direction]]:
-        map_opposite_direction = {
-            Direction.NORTH: Direction.SOUTH,
-            Direction.SOUTH: Direction.NORTH,
-            Direction.EAST: Direction.WEST,
-            Direction.WEST: Direction.EAST,
-        }
-
-        neighbours = set()
-
-        for action in self.actions:
-            if action == map_opposite_direction.get(current_direction): # Snake can't move to the opposite direction of its current direction
-                continue
-
-            new_position = grid.calculate_pos(current_pos, action)
-            if current_pos != new_position:
-                neighbours.add((new_position, action))
-                
-        return neighbours
-
-
     def reconstruct_path(self, came_from: dict[tuple[int, int]], current: tuple[int, int]) -> list[tuple[int, int]]:
         # Reconstruct the path from start to target
         path = []
@@ -83,14 +63,22 @@ class Eating():
         return path
     
 
-    def find_closest_food(self, cur_pos: tuple[int, int], food_positions: set[tuple[int, int]], super_food_positions: set[tuple[int, int]],grid_size: tuple[int, int], traverse: bool, range: int) -> tuple[int, int] | None:
-        """Find the closest food position to the start position or super food considering traverse and/or range"""
-        if not traverse or range < 3:
-            if super_food_positions:
-                return min(super_food_positions, key=lambda pos: self.heuristic(cur_pos, pos, grid_size))
-        elif not food_positions:
-            return None
-        return min(food_positions, key=lambda pos: self.heuristic(cur_pos, pos, grid_size))
+    def find_goal(self, 
+            cur_pos              : tuple[int, int], 
+            food_positions       : set[tuple[int, int]], 
+            super_food_positions : set[tuple[int, int]],
+            grid_size            : tuple[int, int],
+            eat_super_food       : bool
+            ) -> tuple[int, int] | None:
+        """Find the closest food position to the start position"""
+        
+        if not food_positions and not (eat_super_food and super_food_positions):
+            return None  # No food available to target
+
+        target_positions = food_positions | super_food_positions if eat_super_food else food_positions
+
+        # Return the closest position to cur_pos from the target positions
+        return min(target_positions, key=lambda pos: self.heuristic(cur_pos, pos, grid_size))
 
     
     def heuristic(self, pos: tuple[int, int], goal: tuple[int, int], grid_size: tuple[int, int]) -> int:
