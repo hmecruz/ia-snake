@@ -2,9 +2,10 @@ import math
 import copy 
 
 from consts import Tiles, Direction
+from agent.snake import Snake
 
 class Grid:
-    def __init__(self, size: tuple[int, int], grid: list[list], visited_tiles_clear_limit: int = 2):
+    def __init__(self, size: tuple[int, int], grid: list[list], visited_tiles_clear_limit: int = 4):
         self._size = size
         self.grid = grid
         self._stones = self._set_stones()
@@ -85,9 +86,9 @@ class Grid:
 
     def update(self, pos: tuple[int, int], body: list[list[int]], prev_body: list[list[int]], sight: dict[int, dict[int, Tiles]], traverse: bool):    
         self.traverse = traverse
-        eat_food, eat_super_food = self._update_food(pos, sight)
+        eat_food, find_super_food = self._update_food(pos, sight)
         self._update_visited_tiles(sight) 
-        self._update_snake_body(pos, body, prev_body, eat_food, eat_super_food)
+        self._update_snake_body(pos, body, prev_body, eat_food, find_super_food)
         
     
     def _update_food(self, pos: tuple[int, int], sight: dict[int, dict[int, Tiles]]) -> bool:
@@ -107,7 +108,11 @@ class Grid:
         if pos in self.food:
             self.visited_tiles_clear_counter += 1
             self.food.discard(pos)  
-            if self.visited_tiles_clear_counter % self.visited_tiles_clear_limit:
+            if self.visited_tiles_clear_counter >= 30 and self.visited_tiles_clear_counter < 60:
+                self.visited_tiles_clear_limit = 3
+            elif self.visited_tiles_clear_counter >= 60:
+                self.visited_tiles_clear_limit = 2
+            if self.visited_tiles_clear_counter % self.visited_tiles_clear_limit == 0:
                 self.clear_visited_tiles() # Clear all visited cells
             return True, False
         elif pos in self.super_food:
@@ -117,7 +122,7 @@ class Grid:
         return False, False
 
 
-    def _update_snake_body(self, pos: tuple[int, int], body: list[list[int]], prev_body: list[list[int]], eat_food: bool, eat_super_food: bool):
+    def _update_snake_body(self, pos: tuple[int, int], body: list[list[int]], prev_body: list[list[int]], eat_food: bool, find_super_food: bool):
         if not prev_body: # Initial setup of the body 
             for segment in body:
                 x, y = segment
@@ -145,7 +150,7 @@ class Grid:
                 self.grid[prev_tail_x][prev_tail_y] = Tiles.VISITED if (prev_tail_x, prev_tail_y) not in self.stones else Tiles.STONE
 
         self.ate_food = True if eat_food == True else False
-        self.ate_super_food = True if eat_super_food == True else False
+        self.ate_super_food = True if find_super_food == True else False
         
 
     def _update_visited_tiles(self, sight: dict[int, dict[int, Tiles]]):
@@ -203,8 +208,13 @@ class Grid:
             return not self.traverse
         if tile_type == Tiles.SNAKE:
             return True
-        if tile_type in [Tiles.FOOD, Tiles.SUPER]:
+        if tile_type == Tiles.FOOD:
             return False
+        if tile_type == Tiles.SUPER: # Dodges super foods when sight range = 6 (max)
+            if Snake.range != 6:
+                return False
+            else:
+                return True
 
         raise ValueError(f"Unknown tile type: {tile_type}")
         
