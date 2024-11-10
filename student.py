@@ -58,7 +58,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         print(f"Path: {path}")
                 
                 if path:
-                    direction = determine_direction(snake.position, path.pop(0), (grid.hor_tiles, grid.ver_tiles))
+                    direction = determine_direction(snake.position, path.pop(0), grid.size)
                     key = snake.move(direction)
             
                 print(f"Key: {key}")  
@@ -74,7 +74,7 @@ def update_snake_grid(state: dict, snake: Snake, grid: Grid, prev_body: list[lis
     """Update the snake and grid objects based on the new game state."""
     body = state["body"]
     pos = tuple(body[0])
-    direction = determine_direction(body[1], body[0], (grid.hor_tiles, grid.ver_tiles))
+    direction = determine_direction(body[1], body[0], grid.size)
     sight = state["sight"]
     sight = convert_sight(sight) 
     range = state["range"]
