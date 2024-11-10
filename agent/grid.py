@@ -4,16 +4,20 @@ import copy
 from consts import Tiles, Direction
 
 class Grid:
-    def __init__(self, size: tuple[int, int], grid: list[list]):
+    def __init__(self, size: tuple[int, int], grid: list[list], visited_tiles_clear_limit: int = 2):
         self._size = size
         self.grid = grid
         self._stones = self._set_stones()
         self._food = set() 
         self._super_food = set()
         self._traverse = None
+        
         self.ate_food = False
         self.ate_super_food = False
-        self.counter = 0
+        
+        self.visited_tiles_clear_counter = 0
+        self.visited_tiles_clear_limit = visited_tiles_clear_limit # Number of foods to eat before clearing visited tiles
+
 
     def __repr__(self):
         return f"Grid(size={self.size}, stones={len(self.stones)} stones, food={len(self.food)} items, super_food={len(self.super_food)} items)"
@@ -101,9 +105,9 @@ class Grid:
         
         # Eat food and super_food
         if pos in self.food:
+            self.visited_tiles_clear_counter += 1
             self.food.discard(pos)  
-            self.counter += 1
-            if self.counter % 2 == 0:
+            if self.visited_tiles_clear_counter % self.visited_tiles_clear_limit:
                 self.clear_visited_tiles() # Clear all visited cells
             return True, False
         elif pos in self.super_food:

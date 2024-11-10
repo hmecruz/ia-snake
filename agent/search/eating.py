@@ -1,6 +1,6 @@
 import heapq
 
-from consts import Tiles, Direction
+from consts import Direction
 from ..snake import Snake
 from ..grid import Grid
 
@@ -11,7 +11,7 @@ class Eating():
     def get_path(self, snake: Snake, grid: Grid) -> list[tuple[int, int]]:
         """Find the shortest path from the snake's current position to the closest reachable food"""
         
-        goal = self.find_closest_food(snake.position, grid.food)
+        goal = self.find_closest_food(snake.position, grid.food, grid.size)
         if not goal: raise ValueError(f"No food found in {grid.food}")
             
         open_list = []
@@ -20,7 +20,7 @@ class Eating():
 
         came_from = {}
         g_costs = {snake.position: 0} # Actual cost from the start cell to each cell
-        f_costs = {snake.position: self.heuristic(snake.position, goal)} # g_score + heuristic
+        f_costs = {snake.position: self.heuristic(snake.position, goal, grid.size)} # g_score + heuristic
 
         while open_list:
             _, current_pos, current_direction = heapq.heappop(open_list) # Pop node with the lowest f_score from heap
@@ -44,7 +44,7 @@ class Eating():
                 if neighbour not in g_costs or tentative_g_cost < g_costs[neighbour]:
                     came_from[neighbour] = current_pos
                     g_costs[neighbour] = tentative_g_cost
-                    f_cost = tentative_g_cost + self.heuristic(neighbour, goal)
+                    f_cost = tentative_g_cost + self.heuristic(neighbour, goal, grid.size)
                     f_costs[neighbour] = f_cost
                     heapq.heappush(open_list, (f_cost, neighbour, neighbour_dir))
 
@@ -72,6 +72,7 @@ class Eating():
                 
         return neighbours
 
+
     def reconstruct_path(self, came_from: dict[tuple[int, int]], current: tuple[int, int]) -> list[tuple[int, int]]:
         # Reconstruct the path from start to target
         path = []
@@ -82,15 +83,36 @@ class Eating():
         return path
     
 
-    def find_closest_food(self, cur_pos: tuple[int, int], food_positions: set[tuple[int, int]]) -> tuple[int, int] | None:
+    def find_closest_food(self, cur_pos: tuple[int, int], food_positions: set[tuple[int, int]], grid_size: tuple[int, int]) -> tuple[int, int] | None:
         """Find the closest food position to the start position"""
         if not food_positions:
             return None
-        return min(food_positions, key=lambda pos: self.heuristic(cur_pos, pos))
+        return min(food_positions, key=lambda pos: self.heuristic(cur_pos, pos, grid_size))
 
     
-    def heuristic(self, pos: tuple[int, int], goal: tuple[int, int]) -> int:
-        return abs(pos[0] - goal[0]) + abs(pos[1] - goal[1])
+    def heuristic(self, pos: tuple[int, int], goal: tuple[int, int], grid_size: tuple[int, int]) -> int:
+        """Heuristic function that calculates Manhattan distance with wrap-around consideration."""
+        pos_x, pos_y = pos
+        goal_x, goal_y = goal
+        grid_width, grid_height = grid_size
+
+        # Calculate the direct distance along each axis
+        dx = abs(pos_x - goal_x)
+        dy = abs(pos_y - goal_y)
+
+        # Calculate wrap-around distances along each axis
+        wrap_dx = grid_width - dx
+        wrap_dy = grid_height - dy
+
+        # Use the shorter distance for each axis
+        shortest_dx = min(dx, wrap_dx)
+        shortest_dy = min(dy, wrap_dy)
+
+        # Manhattan distance considering wrap-around
+        return shortest_dx + shortest_dy
+
+    #def heuristic(self, pos: tuple[int, int], goal: tuple[int, int], grid_size: tuple[int, int]) -> int:
+    #    return abs(pos[0] - goal[0]) + abs(pos[1] - goal[1])
     
 
     
