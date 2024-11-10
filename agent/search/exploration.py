@@ -23,7 +23,7 @@ class Exploration():
                 return self.reconstruct_path(came_from, current_pos)
             
             # Explore neighbors
-            neighbours = grid.get_neighbours(self.actions, current_pos, current_direction)
+            neighbours = grid.get_neighbours(self.actions, current_pos, current_direction, snake.eat_super_food)
 
             for neighbour, neighbour_dir in neighbours:
                 if neighbour not in visited:
