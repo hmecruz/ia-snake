@@ -91,16 +91,15 @@ def update_snake_grid(state: dict, snake: Snake, grid: Grid, prev_body: list[lis
 
 
 def snake_mode(snake: Snake, grid_food: set[tuple[int, int]], grid_super_food: set[tuple[int, int]], traverse: bool, range: int):
-    if grid_food:  
+    if grid_food:
         snake.mode = Mode.EATING
-    elif not traverse or range < 3: 
+    elif not traverse or range < 3:
         snake.eat_super_food = True
-        if grid_super_food:
-            snake.mode = Mode.EATING
-    else: snake.mode = Mode.EXPLORATION # Default mode
+        snake.mode = Mode.EATING if grid_super_food else Mode.EXPLORATION
+    else:
+        snake.mode = Mode.EXPLORATION  # Default mode
 
 
-            
 # DO NOT CHANGE THE LINES BELLOW
 # You can change the default values using the command line, example:
 # $ NAME='arrumador' python3 client.py

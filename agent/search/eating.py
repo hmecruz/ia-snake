@@ -12,8 +12,9 @@ class Eating():
     def get_path(self, snake: Snake, grid: Grid) -> list[tuple[int, int]]:
         """Find the shortest path from the snake's current position to the closest reachable food"""
         
-        goal = self.find_goal(snake.position, grid.food, grid.super_food, grid.size, snake.eat_super_food)
-        if not goal: raise ValueError(f"No food found in {grid.food}")
+        goal, eat_super_food = self.find_goal(snake.position, grid.food, grid.super_food, grid.size, snake.eat_super_food)
+        if not goal and eat_super_food: raise ValueError(f"No food found in {grid.food}. No food found in {grid.super_food}")
+        elif not goal: raise ValueError(f"No food found in {grid.food}.")
             
         open_list = []
         heapq.heappush(open_list, (0, snake.position, snake.direction))  # (f_cost, position, direction)
@@ -78,7 +79,7 @@ class Eating():
         target_positions = food_positions | super_food_positions if eat_super_food else food_positions
 
         # Return the closest position to cur_pos from the target positions
-        return min(target_positions, key=lambda pos: self.heuristic(cur_pos, pos, grid_size))
+        return min(target_positions, key=lambda pos: self.heuristic(cur_pos, pos, grid_size)), eat_super_food
 
     
     def heuristic(self, pos: tuple[int, int], goal: tuple[int, int], grid_size: tuple[int, int]) -> int:
