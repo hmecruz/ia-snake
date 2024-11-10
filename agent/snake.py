@@ -100,7 +100,6 @@ class Snake:
             body: list[list[int]], 
             sight: dict[int, dict[int, Tiles]], 
             range: int,
-            mode: Mode
         ):
         
         self.position = pos
@@ -108,15 +107,14 @@ class Snake:
         self.body = body
         self.sight = sight
         self.range = range
-        self.mode = mode
 
 
     def move(self, direction: Direction) -> str:
         direction_to_key = {
             Direction.NORTH: "w",  
-            Direction.SOUTH  : "s",   
+            Direction.SOUTH: "s",   
             Direction.WEST : "a",  
-            Direction.EAST  : "d"    
+            Direction.EAST : "d"    
         }
 
         if direction not in direction_to_key:
