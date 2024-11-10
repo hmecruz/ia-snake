@@ -2,7 +2,6 @@ import math
 import copy 
 
 from consts import Tiles, Direction
-from agent.snake import Snake
 
 class Grid:
     def __init__(self, size: tuple[int, int], grid: list[list]):
@@ -168,7 +167,7 @@ class Grid:
         return False, False
 
 
-    def _update_snake_body(self, pos: tuple[int, int], body: list[list[int]], prev_body: list[list[int]], eat_food: bool, find_super_food: bool):
+    def _update_snake_body(self, pos: tuple[int, int], body: list[list[int]], prev_body: list[list[int]], eat_food: bool, eat_super_food: bool):
         if not prev_body: # Initial setup of the body 
             for segment in body:
                 x, y = segment
@@ -196,7 +195,7 @@ class Grid:
                 self.grid[prev_tail_x][prev_tail_y] = Tiles.VISITED if (prev_tail_x, prev_tail_y) not in self.stones else Tiles.STONE
 
         self.ate_food = True if eat_food == True else False
-        self.ate_super_food = True if find_super_food == True else False
+        self.ate_super_food = True if eat_super_food == True else False
         
 
     def _update_visited_tiles(self, sight: dict[int, dict[int, Tiles]]):
@@ -254,13 +253,8 @@ class Grid:
             return not self.traverse
         if tile_type == Tiles.SNAKE:
             return True
-        if tile_type == Tiles.FOOD:
+        if tile_type in [Tiles.FOOD, Tiles.SUPER]:
             return False
-        if tile_type == Tiles.SUPER: # Dodges super foods when sight range = 6 (max)
-            if Snake.range != 6:
-                return False
-            else:
-                return True
 
         raise ValueError(f"Unknown tile type: {tile_type}")
         

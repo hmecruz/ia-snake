@@ -12,7 +12,7 @@ class Eating():
     def get_path(self, snake: Snake, grid: Grid) -> list[tuple[int, int]]:
         """Find the shortest path from the snake's current position to the closest reachable food"""
         
-        goal, eat_super_food = self.find_goal(snake.position, grid.food, grid.super_food, grid.size, snake.find_super_food)
+        goal, eat_super_food = self.find_goal(snake.position, grid.food, grid.super_food, grid.size, snake.eat_super_food)
         if not goal and eat_super_food: raise ValueError(f"No food found in {grid.food}. No food found in {grid.super_food}")
         elif not goal: raise ValueError(f"No food found in {grid.food}.")
             
@@ -76,7 +76,7 @@ class Eating():
         if not food_positions and not (eat_super_food and super_food_positions):
             return None, eat_super_food  # No food available to target
 
-        target_positions = food_positions | super_food_positions if (eat_super_food and super_food_positions) else food_positions
+        target_positions = food_positions | super_food_positions if eat_super_food else food_positions
 
         # Return the closest position to cur_pos from the target positions
         return min(target_positions, key=lambda pos: self.heuristic(cur_pos, pos, grid_size)), eat_super_food

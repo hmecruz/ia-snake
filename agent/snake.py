@@ -11,8 +11,7 @@ class Snake:
         self._sight = None
         self._range = None
         self._mode = None
-        self._find_super_food = False # Mudei o nome desta variavel de eat_super_food para find_super_food para ser mais intuitivo, 
-                                      # pois a snake come super_foods mesmo quando False se elas tiverem no caminho
+        self._eat_super_food = False
     
     def __repr__(self):
         return (f"Snake(position={self.position}, direction={self.direction}, "
@@ -106,14 +105,14 @@ class Snake:
         self._mode= new_mode
 
     @property
-    def find_super_food(self) -> bool:
-        return self._find_super_food
+    def eat_super_food(self) -> bool:
+        return self._eat_super_food
     
-    @find_super_food.setter
-    def find_super_food(self, eat_super_food: bool):
+    @eat_super_food.setter
+    def eat_super_food(self, eat_super_food: bool):
         if not isinstance(eat_super_food, bool):
             raise ValueError(f"Invalid eat_super_food: Expected a Boolean, but received {eat_super_food}.")
-        self._find_super_food = eat_super_food
+        self._eat_super_food = eat_super_food
     
 
     def update(
@@ -123,7 +122,7 @@ class Snake:
             body: list[list[int]], 
             sight: dict[int, dict[int, Tiles]], 
             range: int,
-            find_super_food: bool = False
+            eat_super_food: bool = False
         ):
         
         self.position = pos
@@ -132,7 +131,7 @@ class Snake:
         self.size = self.get_size()
         self.sight = sight
         self.range = range
-        self.find_super_food = find_super_food
+        self.eat_super_food = eat_super_food
 
     
     def get_size(self):
