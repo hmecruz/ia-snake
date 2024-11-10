@@ -37,7 +37,7 @@ class Eating():
             closed_list.add(current_pos) # Add current position to visited 
 
             # Explore neighbours
-            neighbours = grid.get_neighbours(self.actions, current_pos, current_direction)
+            neighbours = grid.get_neighbours(self.actions, current_pos, current_direction, snake.eat_super_food)
 
             for neighbour, neighbour_dir in neighbours:
                 tentative_g_cost = g_costs[current_pos] + 1
