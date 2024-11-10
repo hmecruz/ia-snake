@@ -47,6 +47,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 print(f"Super Foods: {grid.super_food}")
                 print(f"Eat Super Food: {snake.eat_super_food}")
                 print(f"Snake Body: {snake.body}")
+                print(f"Snake Size: {snake.size}")
                 
                 if prev_mode != snake.mode:
                     path = [] # Clear path if mode switches
@@ -84,14 +85,14 @@ def update_snake_grid(state: dict, snake: Snake, grid: Grid, prev_body: list[lis
     
     # Always update snake first
     snake.update(pos, direction, body, sight, range)
-    grid.update(pos, body, prev_body, snake.sight, traverse)
+    grid.update(pos, body, snake.size, prev_body, snake.sight, traverse)
     snake_mode(snake, grid, traverse, range)
 
 
 def snake_mode(snake: Snake, grid: Grid, traverse: bool, range: int):
     if grid.food:  
         snake.mode = Mode.EATING
-    elif grid.super_food and (not traverse or range < 3): 
+    elif grid.super_food and (not traverse and range < 3): 
         snake.eat_super_food = True
         snake.mode = Mode.EATING
     else: snake.mode = Mode.EXPLORATION # Default mode
