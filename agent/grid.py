@@ -231,6 +231,29 @@ class Grid:
 
         # Ensure the position is not blocked
         return new_pos if not self.is_blocked(new_pos) else current
+    
+
+    def get_neighbours(self, actions: list[Direction], current_pos: tuple[int, int], current_direction: Direction) -> list[tuple[tuple[int, int], Direction]]:
+        """Return neighbors of the current position, avoiding reverse direction."""
+        map_opposite_direction = {
+            Direction.NORTH: Direction.SOUTH,
+            Direction.SOUTH: Direction.NORTH,
+            Direction.EAST: Direction.WEST,
+            Direction.WEST: Direction.EAST,
+        }
+
+        neighbours = set()
+
+        for action in actions:
+            # Avoid moving in the reverse direction
+            if action == map_opposite_direction.get(current_direction):
+                continue
+            
+            new_position = self.calculate_pos(current_pos, action)
+            if current_pos != new_position:
+                neighbours.add((new_position, action))
+
+        return neighbours
 
     
     def print_grid(self):
