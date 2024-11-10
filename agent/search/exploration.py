@@ -1,5 +1,7 @@
 from collections import deque
+
 from consts import Tiles, Direction
+
 from ..snake import Snake
 from ..grid import Grid
 
@@ -9,7 +11,6 @@ class Exploration():
 
     def get_path(self, snake: Snake, grid: Grid) -> list[tuple[int, int]]:
         """Find the shortest path from the snake's current position to the closest Tiles.PASSAGE tile using BFS."""
-
         queue = deque([(snake.position, snake.direction)])  # Queue holds (position, direction)
         visited = set([snake.position])  # Visited positions
         came_from = {} # Tracks the path
@@ -22,7 +23,7 @@ class Exploration():
                 return self.reconstruct_path(came_from, current_pos)
             
             # Explore neighbors
-            neighbours = self.get_neighbours(current_pos, current_direction, grid)
+            neighbours = grid.get_neighbours(self.actions, current_pos, current_direction, snake.eat_super_food)
 
             for neighbour, neighbour_dir in neighbours:
                 if neighbour not in visited:
@@ -32,29 +33,6 @@ class Exploration():
 
         print("No path to passage found")
         return None
-    
-
-    def get_neighbours(self, current_pos: tuple[int, int], current_direction: Direction, grid: Grid) -> list[tuple[tuple[int, int], Direction]]:
-        """Return neighbors of the current position, avoiding reverse direction."""
-        map_opposite_direction = {
-            Direction.NORTH: Direction.SOUTH,
-            Direction.SOUTH: Direction.NORTH,
-            Direction.EAST: Direction.WEST,
-            Direction.WEST: Direction.EAST,
-        }
-
-        neighbours = set()
-
-        for action in self.actions:
-            # Avoid moving in the reverse direction
-            if action == map_opposite_direction.get(current_direction):
-                continue
-            
-            new_position = grid.calculate_pos(current_pos, action)
-            if current_pos != new_position:
-                neighbours.add((new_position, action))
-
-        return neighbours
     
 
     def reconstruct_path(self, came_from: dict[tuple[int, int], tuple[int, int]], current: tuple[int, int]) -> list[tuple[int, int]]:
@@ -67,7 +45,7 @@ class Exploration():
         return path
     
 
-    def possible_actions(self, current_pos: tuple[int, int], current_direction: Direction) -> set[Direction]:
+    def possible_actions(self, current_pos: tuple[int, int], current_direction: Direction, grid: Grid) -> set[Direction]:
         """Return neighbors of the current position, avoiding reverse direction."""
         map_opposite_direction = {
             Direction.NORTH: Direction.SOUTH,

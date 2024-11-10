@@ -1,6 +1,6 @@
 from ..grid import Grid
 from ..snake import Snake
-from consts import Direction, Tiles, Mode
+from consts import Direction, Tiles
 
 class SnakeDomain():
     

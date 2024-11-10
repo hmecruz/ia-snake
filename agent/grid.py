@@ -4,7 +4,7 @@ import copy
 from consts import Tiles, Direction
 
 class Grid:
-    def __init__(self, size: tuple[int, int], grid: list[list], visited_tiles_clear_limit: int = 2):
+    def __init__(self, size: tuple[int, int], grid: list[list]):
         self._size = size
         self.grid = grid
         self._stones = self._set_stones()
@@ -12,11 +12,11 @@ class Grid:
         self._super_food = set()
         self._traverse = None
         
-        self.ate_food = False
-        self.ate_super_food = False
+        self._ate_food = False
+        self._ate_super_food = False
         
-        self.visited_tiles_clear_counter = 0
-        self.visited_tiles_clear_limit = visited_tiles_clear_limit # Number of foods to eat before clearing visited tiles
+        self._visited_tiles_clear_counter = 0
+        self._visited_tiles_clear_limit = None # Number of foods to eat before clearing visited tiles
 
 
     def __repr__(self):
@@ -66,8 +66,48 @@ class Grid:
         if not isinstance(traverse, bool):
             raise ValueError(f"Invalid value for traverse: {traverse}. Expected a boolean.")
         self._traverse = traverse
-        
 
+    @property
+    def ate_food(self) -> bool:
+        return self._ate_food
+    
+    @ate_food.setter
+    def ate_food(self, ate_food: bool):
+        if not isinstance(ate_food, bool):
+            raise ValueError(f"Invalid value for ate_food: {ate_food}. Expected a boolean.")
+        self._ate_food = ate_food
+
+    @property
+    def ate_super_food(self) -> bool:
+        return self._ate_super_food
+
+    @ate_super_food.setter
+    def ate_super_food(self, ate_super_food: bool):
+        if not isinstance(ate_super_food, bool):
+            raise ValueError(f"Invalid value for ate_super_food: {ate_super_food}. Expected a boolean.")
+        self._ate_super_food = ate_super_food
+
+    @property
+    def visited_tiles_clear_counter(self) -> int:
+        return self._visited_tiles_clear_counter
+
+    @visited_tiles_clear_counter.setter
+    def visited_tiles_clear_counter(self, counter: int):
+        if not isinstance(counter, int) or counter < 0:
+            raise ValueError(f"Invalid value for visited_tiles_clear_counter: {counter}. Expected a non-negative integer.")
+        self._visited_tiles_clear_counter = counter
+
+    @property
+    def visited_tiles_clear_limit(self) -> int:
+        return self._visited_tiles_clear_limit
+
+    @visited_tiles_clear_limit.setter
+    def visited_tiles_clear_limit(self, limit: int):
+        if not isinstance(limit, int) or limit < 1 or limit > 4:
+            raise ValueError(f"Invalid value for visited_tiles_clear_limit: {limit}. Expected a integer between 1 and 4 inclusive.")
+        self._visited_tiles_clear_limit = limit
+    
+        
     def _set_stones(self) -> set[tuple[int, int]]: 
         """Initialize the positions of stones on the grid."""
         stones = set()
@@ -83,12 +123,22 @@ class Grid:
         return self.grid[x][y]
     
 
-    def update(self, pos: tuple[int, int], body: list[list[int]], prev_body: list[list[int]], sight: dict[int, dict[int, Tiles]], traverse: bool):    
+    def update(self, pos: tuple[int, int], body: list[list[int]], size: int, prev_body: list[list[int]], sight: dict[int, dict[int, Tiles]], traverse: bool):    
         self.traverse = traverse
+        self._update_visited_tiles_clear_limit(size) # Must be called first
         eat_food, eat_super_food = self._update_food(pos, sight)
         self._update_visited_tiles(sight) 
         self._update_snake_body(pos, body, prev_body, eat_food, eat_super_food)
+
         
+    def _update_visited_tiles_clear_limit(self, size):
+        if 30 <= size < 60:
+            self.visited_tiles_clear_limit = 3
+        elif size >= 60:
+            self.visited_tiles_clear_limit = 2
+        else: 
+            self.visited_tiles_clear_limit = 4
+
     
     def _update_food(self, pos: tuple[int, int], sight: dict[int, dict[int, Tiles]]) -> bool:
         """Update the food and super food positions on the grid."""
@@ -105,9 +155,9 @@ class Grid:
         
         # Eat food and super_food
         if pos in self.food:
-            self.visited_tiles_clear_counter += 1
-            self.food.discard(pos)  
-            if self.visited_tiles_clear_counter % self.visited_tiles_clear_limit:
+            self.food.discard(pos)
+            self.visited_tiles_clear_counter += 1  
+            if self.visited_tiles_clear_counter % self.visited_tiles_clear_limit == 0:
                 self.clear_visited_tiles() # Clear all visited cells
             return True, False
         elif pos in self.super_food:
@@ -133,21 +183,20 @@ class Grid:
             for segment in body:
                 x, y = segment
                 self.grid[x][y] = Tiles.SNAKE # Mark each body segment
-            self.ate_super_food = True if eat_super_food == True else False
-            return 
-    
-        # Mark Head
-        head_x, head_y = pos
-        self.grid[head_x][head_y] = Tiles.SNAKE 
+        else:
+            # Mark Head
+            head_x, head_y = pos
+            self.grid[head_x][head_y] = Tiles.SNAKE 
 
-        # Remove Tail
-        prev_tail = prev_body[-1]
-        if not self.ate_food:
-            prev_tail_x, prev_tail_y = prev_tail
-            self.grid[prev_tail_x][prev_tail_y] = Tiles.VISITED if (prev_tail_x, prev_tail_y) not in self.stones else Tiles.STONE
+            # Remove Tail
+            prev_tail = prev_body[-1]
+            if not self.ate_food:
+                prev_tail_x, prev_tail_y = prev_tail
+                self.grid[prev_tail_x][prev_tail_y] = Tiles.VISITED if (prev_tail_x, prev_tail_y) not in self.stones else Tiles.STONE
 
         self.ate_food = True if eat_food == True else False
-
+        self.ate_super_food = True if eat_super_food == True else False
+        
 
     def _update_visited_tiles(self, sight: dict[int, dict[int, Tiles]]):
         # Mark all cells as visited within sight if they are passages
@@ -231,9 +280,42 @@ class Grid:
 
         # Ensure the position is not blocked
         return new_pos if not self.is_blocked(new_pos) else current
+    
+
+    def get_neighbours(
+            self, 
+            actions: list[Direction], 
+            current_pos: tuple[int, int], 
+            current_direction: Direction, 
+            eat_super_food: None | bool = None
+            ) -> list[tuple[tuple[int, int], Direction]]:
+        """Return neighbors of the current position, avoiding reverse direction."""
+        map_opposite_direction = {
+            Direction.NORTH: Direction.SOUTH,
+            Direction.SOUTH: Direction.NORTH,
+            Direction.EAST: Direction.WEST,
+            Direction.WEST: Direction.EAST,
+        }
+
+        neighbours = set()
+
+        for action in actions:
+            # Avoid moving in the reverse direction
+            if action == map_opposite_direction.get(current_direction):
+                continue
+            
+            new_position = self.calculate_pos(current_pos, action)
+            
+            if current_pos != new_position:
+                if eat_super_food or eat_super_food is None:
+                    neighbours.add((new_position, action))
+                elif self.get_tile(new_position) != Tiles.SUPER:
+                    neighbours.add((new_position, action))
+
+        return neighbours
 
     
-    def print_grid(self):
+    def print_grid(self, snake_head: tuple[int, int] | None = None):
         string_map_tile = {
             Tiles.PASSAGE: " ",
             Tiles.STONE: "X", 
@@ -246,8 +328,11 @@ class Grid:
         for y in range(self.ver_tiles): 
             row = []
             for x in range(self.hor_tiles): 
-                tile_value = self.grid[x][y]
-                row.append(string_map_tile.get(tile_value, "?"))
+                if (x, y) == snake_head:
+                    row.append('H')  # If it's the snake's head, print 'H'
+                else:
+                    tile_value = self.grid[x][y]
+                    row.append(string_map_tile.get(tile_value, "?"))
             print(", ".join(row))
         
 
