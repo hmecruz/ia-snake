@@ -42,6 +42,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 print(f"Snake Position: {snake.position}")
                 print(f"Snake Direction: {snake.direction._name_}")
                 print(f"Grid Traverse: {grid.traverse}")
+                print(f"Snake Sight Range: {snake.range}")
                 print(f"Snake Mode: {snake.mode._name_}")
                 print(f"Foods: {grid.food}")
                 print(f"Snake Body: {snake.body}")
