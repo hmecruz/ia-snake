@@ -305,7 +305,7 @@ class Grid:
         return neighbours
 
     
-    def print_grid(self):
+    def print_grid(self, snake_head: tuple[int, int] | None = None):
         string_map_tile = {
             Tiles.PASSAGE: " ",
             Tiles.STONE: "X", 
@@ -318,8 +318,11 @@ class Grid:
         for y in range(self.ver_tiles): 
             row = []
             for x in range(self.hor_tiles): 
-                tile_value = self.grid[x][y]
-                row.append(string_map_tile.get(tile_value, "?"))
+                if (x, y) == snake_head:
+                    row.append('H')  # If it's the snake's head, print 'H'
+                else:
+                    tile_value = self.grid[x][y]
+                    row.append(string_map_tile.get(tile_value, "?"))
             print(", ".join(row))
         
 
