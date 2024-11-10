@@ -94,7 +94,7 @@ def snake_mode(snake: Snake, grid_food: set[tuple[int, int]], grid_super_food: s
     if grid_food:
         snake.mode = Mode.EATING
     elif not traverse or range < 3:
-        snake.eat_super_food = True
+        snake.find_super_food = True
         snake.mode = Mode.EATING if grid_super_food else Mode.EXPLORATION
     else:
         snake.mode = Mode.EXPLORATION  # Default mode
