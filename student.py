@@ -42,12 +42,13 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 print(f"Snake Position: {snake.position}")
                 print(f"Snake Direction: {snake.direction._name_}")
                 print(f"Grid Traverse: {grid.traverse}")
-                print(f"Sight Range: {snake.range}") # Deixa estar este print para sabermos qual é o sight range da cobra
+                print(f"Sight Range: {snake.range}")
                 print(f"Snake Mode: {snake.mode._name_}")
                 print(f"Foods: {grid.food}")
                 print(f"Super Foods: {grid.super_food}")
                 print(f"Find Super Food: {snake.find_super_food}")
                 print(f"Snake Body: {snake.body}")
+                print(f"Snake Size: {snake.size}")
                 
                 if prev_mode != snake.mode:
                     path = [] # Clear path if mode switches
@@ -85,20 +86,20 @@ def update_snake_grid(state: dict, snake: Snake, grid: Grid, prev_body: list[lis
     
     # Always update snake first
     snake.update(pos, direction, body, sight, range)
-    grid.update(pos, body, prev_body, snake.sight, traverse)
-    snake_mode(snake, grid, traverse, range)
+    grid.update(pos, snake.body, snake.size, prev_body, snake.sight, traverse)
+    snake_mode(snake, grid.food, grid.super_food, traverse, range)
 
 
-def snake_mode(snake: Snake, grid: Grid, traverse: bool, range: int):
-    if grid.food:  
+def snake_mode(snake: Snake, grid_food: set[tuple[int, int]], grid_super_food: set[tuple[int, int]], traverse: bool, range: int):
+    if grid_food:
         snake.mode = Mode.EATING
-    elif not traverse or range < 3: 
-        snake.find_super_food = True
-        if grid.super_food:
-            snake.mode = Mode.EATING
-    else: snake.mode = Mode.EXPLORATION # Default mode
+    elif not traverse or range < 3:
+        snake.eat_super_food = True
+        snake.mode = Mode.EATING if grid_super_food else Mode.EXPLORATION
+    else:
+        snake.mode = Mode.EXPLORATION  # Default mode
 
-            
+
 # DO NOT CHANGE THE LINES BELLOW
 # You can change the default values using the command line, example:
 # $ NAME='arrumador' python3 client.py

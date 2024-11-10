@@ -7,6 +7,7 @@ class Snake:
         self._pos = None # Head position
         self._dir = None 
         self._body = None
+        self._size = None 
         self._sight = None
         self._range = None
         self._mode = None
@@ -63,7 +64,17 @@ class Snake:
         ):
             raise ValueError(f"Invalid body format: Expected a list of [x, y] positions with integer values, but received {new_body}.")
         self._body = new_body
-    
+
+    @property
+    def size(self) -> int:
+        return len(self._body)
+
+    @size.setter
+    def size(self, new_size: int):
+        if not isinstance(new_size, int) or new_size < 0:
+            raise ValueError(f"Invalid size: {new_size}. Expected a non-negative integer.")
+        self._size = new_size
+        
     @property
     def sight(self) -> dict[int, dict[int, Tiles]]:
         return self._sight
@@ -98,13 +109,13 @@ class Snake:
     def find_super_food(self) -> bool:
         return self._find_super_food
     
-    @find_super_food.setter
-    def find_super_food(self, find_super_food: bool):
-        if not isinstance(find_super_food, bool):
-            raise ValueError(f"Invalid find_super_food: Expected a Boolean, but received {find_super_food}.")
-        self._find_super_food = find_super_food
-
+    @eat_super_food.setter
+    def eat_super_food(self, eat_super_food: bool):
+        if not isinstance(eat_super_food, bool):
+            raise ValueError(f"Invalid eat_super_food: Expected a Boolean, but received {eat_super_food}.")
+        self._eat_super_food = eat_super_food
     
+
     def update(
             self, 
             pos: tuple[int, int], 
@@ -118,10 +129,14 @@ class Snake:
         self.position = pos
         self.direction = dir
         self.body = body
+        self.size = self.get_size()
         self.sight = sight
         self.range = range
         self.find_super_food = find_super_food
 
+    
+    def get_size(self):
+        return len(self.body)
 
     def move(self, direction: Direction) -> str:
         direction_to_key = {
