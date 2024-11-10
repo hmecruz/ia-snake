@@ -74,7 +74,7 @@ class Eating():
         """Find the closest food position to the start position"""
         
         if not food_positions and not (eat_super_food and super_food_positions):
-            return None  # No food available to target
+            return None, eat_super_food  # No food available to target
 
         target_positions = food_positions | super_food_positions if eat_super_food else food_positions
 
