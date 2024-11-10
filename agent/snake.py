@@ -109,11 +109,11 @@ class Snake:
     def find_super_food(self) -> bool:
         return self._find_super_food
     
-    @eat_super_food.setter
-    def eat_super_food(self, eat_super_food: bool):
+    @find_super_food.setter
+    def find_super_food(self, eat_super_food: bool):
         if not isinstance(eat_super_food, bool):
             raise ValueError(f"Invalid eat_super_food: Expected a Boolean, but received {eat_super_food}.")
-        self._eat_super_food = eat_super_food
+        self._find_super_food = eat_super_food
     
 
     def update(
