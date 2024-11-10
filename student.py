@@ -84,11 +84,11 @@ def update_snake_grid(state: dict, snake: Snake, grid: Grid, prev_body: list[lis
     # Always update snake first
     snake.update(pos, direction, body, sight, range)
     grid.update(pos, body, prev_body, snake.sight, traverse)
-    snake.mode = snake_mode(grid)
+    snake.mode = snake_mode(grid, traverse, range)
 
 
-def snake_mode(grid: Grid):
-    if grid.food:
+def snake_mode(grid: Grid, traverse: bool, range: int):
+    if grid.food or (grid.super_food and (not traverse or range < 3)):
         return Mode.EATING
     return Mode.EXPLORATION
 

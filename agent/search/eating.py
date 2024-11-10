@@ -11,7 +11,7 @@ class Eating():
     def get_path(self, snake: Snake, grid: Grid) -> list[tuple[int, int]]:
         """Find the shortest path from the snake's current position to the closest reachable food"""
         
-        goal = self.find_closest_food(snake.position, grid.food, grid.size)
+        goal = self.find_closest_food(snake.position, grid.food, grid.super_food, grid.size, grid.traverse, snake.range)
         if not goal: raise ValueError(f"No food found in {grid.food}")
             
         open_list = []
@@ -83,9 +83,12 @@ class Eating():
         return path
     
 
-    def find_closest_food(self, cur_pos: tuple[int, int], food_positions: set[tuple[int, int]], grid_size: tuple[int, int]) -> tuple[int, int] | None:
-        """Find the closest food position to the start position"""
-        if not food_positions:
+    def find_closest_food(self, cur_pos: tuple[int, int], food_positions: set[tuple[int, int]], super_food_positions: set[tuple[int, int]],grid_size: tuple[int, int], traverse: bool, range: int) -> tuple[int, int] | None:
+        """Find the closest food position to the start position or super food considering traverse and/or range"""
+        if not traverse or range < 3:
+            if super_food_positions:
+                return min(super_food_positions, key=lambda pos: self.heuristic(cur_pos, pos, grid_size))
+        elif not food_positions:
             return None
         return min(food_positions, key=lambda pos: self.heuristic(cur_pos, pos, grid_size))
 
