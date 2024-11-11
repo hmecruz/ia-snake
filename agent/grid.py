@@ -314,15 +314,12 @@ class Grid:
                 continue
             
             new_position = self.calculate_pos(current_pos, action)
-        
+            
             if current_pos != new_position:
                 if eat_super_food or eat_super_food is None:
                     neighbours.add((new_position, action))
                 elif self.get_tile(new_position) != Tiles.SUPER:
                     neighbours.add((new_position, action))
-        
-            if current_pos != new_position:
-                neighbours.add((new_position, action))
 
         return neighbours
 

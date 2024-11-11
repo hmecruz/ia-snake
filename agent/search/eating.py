@@ -102,9 +102,3 @@ class Eating():
 
         # Manhattan distance considering wrap-around
         return shortest_dx + shortest_dy
-
-    #def heuristic(self, pos: tuple[int, int], goal: tuple[int, int], grid_size: tuple[int, int]) -> int:
-    #    return abs(pos[0] - goal[0]) + abs(pos[1] - goal[1])
-    
-
-    
