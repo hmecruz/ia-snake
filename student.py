@@ -32,11 +32,10 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         eating = Eating()
 
         path = deque()
+
         prev_body = None
         prev_food_positions = None
         prev_super_food_positions = None
-        foods_eaten = 0
-        steps = 0
         
         while True:
             try:
@@ -52,21 +51,17 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 update_snake_grid(state, snake, grid, prev_body)
 
                 print(f"Snake Position: {snake.position}")
-                print(f"Snake Direction: {snake.direction._name_}")
+                #print(f"Snake Direction: {snake.direction._name_}")
                 print(f"Grid Traverse: {grid.traverse}")
-                print(f"Sight Range: {snake.range}")
-                print(f"Foods Eaten: {foods_eaten}")
-                print(f"Step Counter: {steps}")
+                #print(f"Sight Range: {snake.range}")
                 print(f"Snake Mode: {snake.mode._name_}")
-                print(f"Eat Super Food: {snake.eat_super_food}")
                 print(f"Foods: {grid.food}")
                 #print(f"Previous Foods: {prev_food_positions}")
                 print(f"Super Foods: {grid.super_food}")
+                print(f"Eat Super Food: {snake.eat_super_food}")
                 print(f"Snake Body: {snake.body}")
                 print(f"Snake Size: {snake.size}")
 
-                if grid.ate_food:
-                    foods_eaten += 1
                 # Path Clearence Conditions --> TODO Make this a function in the future if it gets bigger (it will)
                 if prev_mode != snake.mode:
                     path.clear() # Clear path if mode switches
@@ -87,7 +82,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 if path:
                     direction = determine_direction(snake.position, path.popleft(), grid.size)
                     key = snake.move(direction)
-                    steps += 1
             
                 print(f"Key: {key}")  
                 grid.print_grid(snake.position)

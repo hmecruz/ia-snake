@@ -17,8 +17,7 @@ class Exploration():
         self.tile_costs = tile_costs if tile_costs is not None else {
             Tiles.PASSAGE: 1,
             Tiles.STONE: 5,    
-            Tiles.VISITED2: 4,
-            Tiles.VISITED1: 3
+            Tiles.VISITED: 4
         }
         self.default_cost = 1
 

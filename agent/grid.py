@@ -98,27 +98,16 @@ class Grid:
         self._visited_tiles_clear_counter = counter
 
     @property
-    def visited_tiles_clear_limit(self) -> int: # não está a ser usado
+    def visited_tiles_clear_limit(self) -> int:
         return self._visited_tiles_clear_limit
 
     @visited_tiles_clear_limit.setter
-    def visited_tiles_clear_limit(self, limit: int): # não está a ser usado
+    def visited_tiles_clear_limit(self, limit: int):
         if not isinstance(limit, int) or limit < 1 or limit > 4:
             raise ValueError(f"Invalid value for visited_tiles_clear_limit: {limit}. Expected a integer between 1 and 4 inclusive.")
         self._visited_tiles_clear_limit = limit
-
-    @property
-    def visited2_tiles(self) -> dict[int, dict[int, Tiles]]: # testar
-        visited2_dict = {}
-        for x in range(self.hor_tiles):
-            for y in range(self.ver_tiles):
-                if self.grid[x][y] == Tiles.VISITED2:
-                    if x not in visited2_dict:
-                        visited2_dict[x] = {}
-                    visited2_dict[x][y] = Tiles.VISITED2
-        return visited2_dict
+    
         
-           
     def _set_stones(self) -> set[tuple[int, int]]: 
         """Initialize the positions of stones on the grid."""
         stones = set()
@@ -145,7 +134,7 @@ class Grid:
 
     def update(self, pos: tuple[int, int], body: list[list[int]], size: int, prev_body: list[list[int]], sight: dict[int, dict[int, Tiles]], traverse: bool):    
         self.traverse = traverse
-        self._update_visited_tiles_clear_limit(size) # Must be called first # não está a ser usado
+        self._update_visited_tiles_clear_limit(size) # Must be called first
         eat_food, eat_super_food = self._update_food(pos, sight)
         self._update_visited_tiles(sight) 
         self._update_snake_body(pos, body, prev_body, eat_food, eat_super_food)
@@ -177,7 +166,7 @@ class Grid:
         if pos in self.food:
             self.food.discard(pos)
             self.visited_tiles_clear_counter += 1  
-            if self.visited_tiles_clear_counter % 2 == 0: # self.visited_tiles_clear_limit == 0: # comentado para testar novo algoritmo
+            if self.visited_tiles_clear_counter % self.visited_tiles_clear_limit == 0:
                 self.clear_visited_tiles() # Clear all visited cells
             return True, False
         elif pos in self.super_food:
@@ -198,7 +187,7 @@ class Grid:
             # Clear previous snake from grid 
             for segment in prev_body:
                 x, y = segment
-                self.grid[x][y] = Tiles.VISITED1 if (x, y) not in self.stones else Tiles.STONE
+                self.grid[x][y] = Tiles.VISITED if (x, y) not in self.stones else Tiles.STONE
             # Mark current snake in grid
             for segment in body:
                 x, y = segment
@@ -212,40 +201,25 @@ class Grid:
             prev_tail = prev_body[-1]
             if not self.ate_food:
                 prev_tail_x, prev_tail_y = prev_tail
-                self.grid[prev_tail_x][prev_tail_y] = Tiles.VISITED1 if (prev_tail_x, prev_tail_y) not in self.stones else Tiles.STONE
+                self.grid[prev_tail_x][prev_tail_y] = Tiles.VISITED if (prev_tail_x, prev_tail_y) not in self.stones else Tiles.STONE
 
         self.ate_food = True if eat_food == True else False
         self.ate_super_food = True if eat_super_food == True else False
         
-
-    def transform_v2_into_v1(self):
-        for x, y_tile in self.visited2_tiles.items():
-            for y, tile in y_tile.items():
-                if tile == Tiles.VISITED2:
-                    self.grid[x][y] = Tiles.VISITED1
-
 
     def _update_visited_tiles(self, sight: dict[int, dict[int, Tiles]]):
         # Mark all cells as visited within sight if they are passages
         for x, y_tile in sight.items():
             for y, tile in y_tile.items():
                 if tile == Tiles.PASSAGE:
-                    if self.ate_food and self.visited2_tiles:
-                        self.transform_v2_into_v1()
-                        self.grid[x][y] = Tiles.VISITED2
-                    elif self.visited2_tiles:
-                        self.grid[x][y] = Tiles.VISITED2
-                    elif self.ate_food:
-                        self.grid[x][y] = Tiles.VISITED2
-                    else:
-                        self.grid[x][y] = Tiles.VISITED1
+                    self.grid[x][y] = Tiles.VISITED
             
             
     def clear_visited_tiles(self):
         """Clear all visited tiles."""
         for x in range(self.hor_tiles):
             for y in range(self.ver_tiles):
-                if self.get_tile((x, y)) == Tiles.VISITED1:
+                if self.get_tile((x, y)) == Tiles.VISITED:
                     self.grid[x][y] = Tiles.PASSAGE
 
 
@@ -282,7 +256,7 @@ class Grid:
         
         tile_type = self.get_tile(position)
 
-        if tile_type in [Tiles.PASSAGE, Tiles.VISITED1, Tiles.VISITED2]:
+        if tile_type in [Tiles.PASSAGE, Tiles.VISITED]:
             return False
         if tile_type == Tiles.STONE:
             return not self.traverse
@@ -363,8 +337,7 @@ class Grid:
             Tiles.FOOD: "F",
             Tiles.SUPER: "S",
             Tiles.SNAKE: "B",
-            Tiles.VISITED1: ".",
-            Tiles.VISITED2: ":"
+            Tiles.VISITED: "."
         }
 
         for y in range(self.ver_tiles): 

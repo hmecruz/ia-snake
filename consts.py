@@ -19,8 +19,7 @@ class Tiles(IntEnum):
     FOOD = 2
     SUPER = 3
     SNAKE = 4
-    VISITED1 = 5
-    VISITED2 = 6
+    VISITED = 5
 
 
 class SuperFood(IntEnum):

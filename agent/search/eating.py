@@ -17,8 +17,7 @@ class Eating():
         self.tile_costs = tile_costs if tile_costs is not None else {
             Tiles.PASSAGE: 3,
             Tiles.STONE: 6,    
-            Tiles.VISITED1: 4,
-            Tiles.VISITED2: 5,
+            Tiles.VISITED: 5,
             Tiles.FOOD: 0
         }
         self.default_cost = 1
