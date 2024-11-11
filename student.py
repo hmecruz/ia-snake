@@ -55,7 +55,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 if not path: # List if empty
                     if snake.mode == Mode.EXPLORATION: 
-                        path = exploration.get_path(snake, grid) # Request a new path to follow
+                        path = exploration.get_path(snake, grid, True) # Request a new path to follow
                     elif snake.mode == Mode.EATING:
                         path = eating.get_path(snake, grid) # Request a new path to follow
                     
