@@ -4,6 +4,8 @@ import json
 import os
 import websockets
 
+from collections import deque
+
 from agent.snake import Snake
 from agent.grid import Grid
 
@@ -28,7 +30,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         exploration = Exploration()
         eating = Eating()
 
-        path = []
+        path = deque()
         prev_body = None
         
         while True:
@@ -51,18 +53,18 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 print(f"Snake Size: {snake.size}")
                 
                 if prev_mode != snake.mode:
-                    path = [] # Clear path if mode switches
+                    path.clear() # Clear path if mode switches
 
                 if not path: # List if empty
                     if snake.mode == Mode.EXPLORATION: 
-                        path = exploration.get_path(snake, grid, True) # Request a new path to follow
+                        path = deque(exploration.get_path(snake, grid, True)) # Request a new path to follow
                     elif snake.mode == Mode.EATING:
-                        path = eating.get_path(snake, grid) # Request a new path to follow
+                        path = deque(eating.get_path(snake, grid)) # Request a new path to follow
                     
                 print(f"Path: {path}")
                 
                 if path:
-                    direction = determine_direction(snake.position, path.pop(0), grid.size)
+                    direction = determine_direction(snake.position, path.popleft(), grid.size)
                     key = snake.move(direction)
             
                 print(f"Key: {key}")  
