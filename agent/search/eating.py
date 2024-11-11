@@ -2,55 +2,72 @@ import heapq
 
 from collections import deque
 
-from consts import Direction
+from consts import Direction, Tiles
 
 from ..snake import Snake
 from ..grid import Grid
 
 class Eating():
-    def __init__(self, actions: list[Direction] = [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH]):
+    def __init__(
+        self, 
+        actions: list[Direction] = [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH],
+        tile_costs: dict[Tiles, int] | None = None
+    ):
         self.actions = actions
+        self.tile_costs = tile_costs if tile_costs is not None else {
+            Tiles.PASSAGE: 3,
+            Tiles.STONE: 6,    
+            Tiles.VISITED: 5,
+            Tiles.FOOD: 0
+        }
+        self.default_cost = 1
 
     def get_path(self, snake: Snake, grid: Grid) -> deque[tuple[int, int]]:
-        """Find the shortest path from the snake's current position to the closest reachable food"""
+        """Find the lowest cost path using A* from the snake's current position to the closest reachable food"""
         
+        # Super Food Cost
+        self.tile_costs[Tiles.SUPER] = 2 if snake.eat_super_food else 15
+
         goal, eat_super_food = self.find_goal(snake.position, grid.food, grid.super_food, grid.size, snake.eat_super_food)
-        if not goal and eat_super_food: raise ValueError(f"No food found in {grid.food}. No food found in {grid.super_food}")
-        elif not goal: raise ValueError(f"No food found in {grid.food}.")
+        if not goal and eat_super_food: 
+            raise ValueError(f"No food found in {grid.food}. No food found in {grid.super_food}")
+        elif not goal: 
+            raise ValueError(f"No food found in {grid.food}.")
             
         open_list = []
         heapq.heappush(open_list, (0, snake.position, snake.direction))  # (f_cost, position, direction)
-        closed_list = set() # Visited positions
+        visited = set() # Visited positions
 
         came_from = {}
-        g_costs = {snake.position: 0} # Actual cost from the start cell to each cell
+        g_costs = {snake.position: 0} # Stores the cost from start to each position
         f_costs = {snake.position: self.heuristic(snake.position, goal, grid.size)} # g_score + heuristic
 
         while open_list:
             _, current_pos, current_direction = heapq.heappop(open_list) # Pop node with the lowest f_score from heap
             
-            if current_pos in closed_list:
+            if current_pos in visited:
                 continue # Position has already been visited
                 
             # Check if the current position is a passage tile 
             if current_pos == goal:
                 return self.reconstruct_path(came_from, current_pos)
             
-            closed_list.add(current_pos) # Add current position to visited 
+            visited.add(current_pos) # Add current position to visited 
 
             # Explore neighbours
             neighbours = grid.get_neighbours(self.actions, current_pos, current_direction, snake.eat_super_food)
 
-            for neighbour, neighbour_dir in neighbours:
-                tentative_g_cost = g_costs[current_pos] + 1
+            for neighbour_pos, neighbour_dir in neighbours:
+                tile_cost = self.tile_costs.get(grid.get_tile(neighbour_pos), self.default_cost) # Tile weight for neighbor
+                tentative_g_cost = g_costs[current_pos] + tile_cost
                 
                 # Update g_score, f_score, and add to open list if it has not been processed or has a better score
-                if neighbour not in g_costs or tentative_g_cost < g_costs[neighbour]:
-                    came_from[neighbour] = current_pos
-                    g_costs[neighbour] = tentative_g_cost
-                    f_cost = tentative_g_cost + self.heuristic(neighbour, goal, grid.size)
-                    f_costs[neighbour] = f_cost
-                    heapq.heappush(open_list, (f_cost, neighbour, neighbour_dir))
+                if neighbour_pos not in g_costs or tentative_g_cost < g_costs[neighbour_pos]:
+                    came_from[neighbour_pos] = current_pos
+                    g_costs[neighbour_pos] = tentative_g_cost
+                    f_cost = tentative_g_cost + self.heuristic(neighbour_pos, goal, grid.size)
+                    f_costs[neighbour_pos] = f_cost
+                    heapq.heappush(open_list, (f_cost, neighbour_pos, neighbour_dir))
 
         print("No path found")
         return None

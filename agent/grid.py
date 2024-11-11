@@ -151,7 +151,7 @@ class Grid:
         self._update_snake_body(pos, body, prev_body, eat_food, eat_super_food)
 
         
-    def _update_visited_tiles_clear_limit(self, size): # não está a ser usado
+    def _update_visited_tiles_clear_limit(self, size):
         if size < 30:
             self.visited_tiles_clear_limit = 4
         elif 30 <= size < 60:
@@ -341,12 +341,18 @@ class Grid:
             
             new_position = self.calculate_pos(current_pos, action)
             
+            # This is used for BFS Exploration prevents eating super food
+            """
             if current_pos != new_position:
                 if eat_super_food or eat_super_food is None:
                     neighbours.add((new_position, action))
                 elif self.get_tile(new_position) != Tiles.SUPER:
                     neighbours.add((new_position, action))
+            """
 
+            if current_pos != new_position:
+                neighbours.add((new_position, action))
+                    
         return neighbours
 
     
