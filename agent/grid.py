@@ -142,9 +142,9 @@ class Grid:
         
     def _update_visited_tiles_clear_limit(self, size):
         if 30 <= size < 60:
-            self.visited_tiles_clear_limit = 3
+            self.visited_tiles_clear_limit = 1
         elif size >= 60:
-            self.visited_tiles_clear_limit = 2
+            self.visited_tiles_clear_limit = 1
         else: 
             self.visited_tiles_clear_limit = 4
 
