@@ -8,7 +8,7 @@ class Grid:
         self._size = size
         self.grid = grid
         self._stones = self._set_stones()
-        self._food = set() 
+        self._food = self._set_foods()
         self._super_food = set()
         self._traverse = None
         
@@ -116,6 +116,15 @@ class Grid:
                 if self.grid[x][y] == Tiles.STONE:
                     stones.add((x, y)) # Store stone positions
         return stones
+    
+    def _set_foods(self) -> set[tuple[int, int]]: 
+        """Initialize the positions of foods on the grid."""
+        foods = set()
+        for x in range(self.hor_tiles):
+            for y in range(self.ver_tiles):
+                if self.grid[x][y] == Tiles.FOOD:
+                    foods.add((x, y)) # Store food positions
+        return foods
 
 
     def get_tile(self, pos: tuple[int, int]) -> Tiles:
@@ -132,12 +141,12 @@ class Grid:
 
         
     def _update_visited_tiles_clear_limit(self, size):
-        if 30 <= size < 60:
-            self.visited_tiles_clear_limit = 3
-        elif size >= 60:
-            self.visited_tiles_clear_limit = 2
-        else: 
+        if size < 30:
             self.visited_tiles_clear_limit = 4
+        elif 30 <= size < 60:
+            self.visited_tiles_clear_limit = 1
+        else: 
+            self.visited_tiles_clear_limit = 1
 
     
     def _update_food(self, pos: tuple[int, int], sight: dict[int, dict[int, Tiles]]) -> bool:
@@ -306,12 +315,18 @@ class Grid:
             
             new_position = self.calculate_pos(current_pos, action)
             
+            # This is used for BFS Exploration prevents eating super food
+            """
             if current_pos != new_position:
                 if eat_super_food or eat_super_food is None:
                     neighbours.add((new_position, action))
                 elif self.get_tile(new_position) != Tiles.SUPER:
                     neighbours.add((new_position, action))
+            """
 
+            if current_pos != new_position:
+                neighbours.add((new_position, action))
+                    
         return neighbours
 
     

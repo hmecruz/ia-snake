@@ -9,7 +9,7 @@ class Exploration():
     def __init__(self, actions: list[Direction] = [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH]):
         self.actions = actions
 
-    def get_path(self, snake: Snake, grid: Grid, depth: bool = False, depth_limit: None | int = 0) -> list[tuple[int, int]] | None:
+    def get_path(self, snake: Snake, grid: Grid, depth: bool = False, depth_limit: None | int = 0) -> deque[tuple[int, int]] | None:
         """
         Find the shortest path from the snake's current position to the nearest `Tiles.PASSAGE` tile using Breadth-First Search (BFS).
 
@@ -24,17 +24,19 @@ class Exploration():
                 - If `None` (default), no depth limit is applied during goal search, returns the best goal from the first goal depth.
 
         Returns:
-            list[tuple[int, int]] | None: A list of grid positions representing the path to the chosen `Tiles.PASSAGE` tile.
+            deque[tuple[int, int]] | None: A list of grid positions representing the path to the chosen `Tiles.PASSAGE` tile.
                 - Returns `None` if no path to any `Tiles.PASSAGE` tile is found.
         """
         queue = deque([(snake.position, snake.direction, 0)])  # Queue holds (position, direction, depth)
         visited = set([snake.position])  # Visited positions
+        
         came_from = {} # Tracks the path
+        
         goals = set()
         first_goal_depth = 0 # Tracks the depth of the first goal find 
         
         while queue:
-            current_pos, current_direction, current_depth = queue.popleft()
+            current_pos, current_dir, current_depth = queue.popleft()
             
             if goals and depth and current_depth > first_goal_depth:
                 if current_depth > depth_limit:
@@ -44,19 +46,20 @@ class Exploration():
             # Check if the current position is a passage tile
             if grid.get_tile(current_pos) == Tiles.PASSAGE:
                 if depth: 
-                    if not goals: first_goal_depth = current_depth
+                    if not goals: 
+                        first_goal_depth = current_depth
                     goals.add((current_pos)) 
                 else: 
                     return self.reconstruct_path(came_from, current_pos)
             
             # Explore neighbors
-            neighbours = grid.get_neighbours(self.actions, current_pos, current_direction, snake.eat_super_food)
+            neighbours = grid.get_neighbours(self.actions, current_pos, current_dir, snake.eat_super_food)
 
-            for neighbour, neighbour_dir in neighbours:
-                if neighbour not in visited:
-                    visited.add(neighbour)
-                    came_from[neighbour] = current_pos
-                    queue.append((neighbour, neighbour_dir, current_depth+1))
+            for neighbour_pos, neighbour_dir in neighbours:
+                if neighbour_pos not in visited:
+                    visited.add(neighbour_pos)
+                    came_from[neighbour_pos] = current_pos
+                    queue.append((neighbour_pos, neighbour_dir, current_depth+1))
 
         print("No path to passage found")
         return None
@@ -77,17 +80,16 @@ class Exploration():
         
         return best_goal
 
-    def reconstruct_path(self, came_from: dict[tuple[int, int], tuple[int, int]], current: tuple[int, int]) -> list[tuple[int, int]]:
+    def reconstruct_path(self, came_from: dict[tuple[int, int], tuple[int, int]], current: tuple[int, int]) -> deque[tuple[int, int]]:
         """Reconstruct the path from start to target using came_from dictionary."""
-        path = []
+        path = deque()  # Use deque for efficient appending to the left
         while current in came_from:
-            path.append(current)
+            path.appendleft(current)  # Append to the left, so no need to reverse later
             current = came_from[current]
-        path.reverse()
-        return path
+        return path  # Return deque directly
     
 
-    def possible_actions(self, current_pos: tuple[int, int], current_direction: Direction, grid: Grid) -> set[Direction]:
+    def possible_actions(self, current_pos: tuple[int, int], current_dir: Direction, grid: Grid) -> set[Direction]:
         """Return neighbors of the current position, avoiding reverse direction."""
         map_opposite_direction = {
             Direction.NORTH: Direction.SOUTH,
@@ -99,16 +101,15 @@ class Exploration():
         """
         possible_actions = {
             action for action in self.actions
-            if action != opposite_direction.get(current_direction)
+            if action != opposite_direction.get(current_dir)
             and grid.calculate_pos(current_pos, action) != current_pos
         }
-
         """
         possible_actions = set()
 
         for action in self.actions:
             # Avoid moving in the reverse direction
-            if action == map_opposite_direction.get(current_direction):
+            if action == map_opposite_direction.get(current_dir):
                 continue
             
             new_position = grid.calculate_pos(current_pos, action)

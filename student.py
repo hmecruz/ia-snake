@@ -4,10 +4,13 @@ import json
 import os
 import websockets
 
+from collections import deque
+
 from agent.snake import Snake
 from agent.grid import Grid
 
-from agent.search.exploration import Exploration
+from agent.search.exploration_dijkstra import Exploration
+# from agent.search.exploration_bfs import Exploration
 from agent.search.eating import Eating
 
 from agent.utils.utils import determine_direction, convert_sight
@@ -28,15 +31,23 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         exploration = Exploration()
         eating = Eating()
 
-        path = []
+        path = deque()
+
         prev_body = None
+        prev_food_positions = None
+        prev_super_food_positions = None
         
         while True:
             try:
                 print("\n--------------------------------------------\n")
                 state = json.loads(await websocket.recv()) 
+
+                # Previous Assignments
                 prev_mode = snake.mode
                 if snake.body: prev_body = snake.body
+                prev_food_positions = grid.food
+                prev_super_food_positions = grid.super_food
+
                 update_snake_grid(state, snake, grid, prev_body)
 
                 print(f"Snake Position: {snake.position}")
@@ -49,20 +60,27 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 print(f"Eat Super Food: {snake.eat_super_food}")
                 print(f"Snake Body: {snake.body}")
                 print(f"Snake Size: {snake.size}")
-                
-                if prev_mode != snake.mode:
-                    path = [] # Clear path if mode switches
 
+                # Path Clearence Conditions --> TODO Make this a function in the future if it gets bigger (it will)
+                if prev_mode != snake.mode:
+                    path.clear() # Clear path if mode switches
+                elif len(prev_food_positions) != len(grid.food):
+                    path.clear() # Clear path if new food is found. Allows for path recalculation to closer food
+                elif len(prev_super_food_positions) != len(grid.super_food) and snake.eat_super_food:
+                    path.clear() # Clear path if new super food is found and eat super food is True. Allows for path recalculation to closer super foods
+
+                
+                # Path Calculation
                 if not path: # List if empty
                     if snake.mode == Mode.EXPLORATION: 
-                        path = exploration.get_path(snake, grid, True) # Request a new path to follow
+                        path = deque(exploration.get_path(snake, grid, True)) # Request a new path to follow
                     elif snake.mode == Mode.EATING:
-                        path = eating.get_path(snake, grid) # Request a new path to follow
+                        path = deque(eating.get_path(snake, grid)) # Request a new path to follow
                     
                 print(f"Path: {path}")
                 
                 if path:
-                    direction = determine_direction(snake.position, path.pop(0), grid.size)
+                    direction = determine_direction(snake.position, path.popleft(), grid.size)
                     key = snake.move(direction)
             
                 print(f"Key: {key}")  
@@ -93,7 +111,7 @@ def update_snake_grid(state: dict, snake: Snake, grid: Grid, prev_body: list[lis
 def snake_mode(snake: Snake, grid_food: set[tuple[int, int]], grid_super_food: set[tuple[int, int]], traverse: bool, range: int):
     if grid_food:
         snake.mode = Mode.EATING
-    elif not traverse or range < 3:
+    elif not traverse or range < 4:
         snake.eat_super_food = True
         snake.mode = Mode.EATING if grid_super_food else Mode.EXPLORATION
     else:

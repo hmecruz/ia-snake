@@ -1,5 +1,7 @@
 import heapq
 
+from collections import deque
+
 from consts import Direction
 
 from ..snake import Snake
@@ -9,8 +11,8 @@ class Eating():
     def __init__(self, actions: list[Direction] = [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH]):
         self.actions = actions
 
-    def get_path(self, snake: Snake, grid: Grid) -> list[tuple[int, int]]:
-        """Find the shortest path from the snake's current position to the closest reachable food"""
+    def get_path(self, snake: Snake, grid: Grid) -> deque[tuple[int, int]]:
+        """Find the shortest path using A* from the snake's current position to the closest reachable food"""
         
         goal, eat_super_food = self.find_goal(snake.position, grid.food, grid.super_food, grid.size, snake.eat_super_food)
         if not goal and eat_super_food: raise ValueError(f"No food found in {grid.food}. No food found in {grid.super_food}")
@@ -18,23 +20,23 @@ class Eating():
             
         open_list = []
         heapq.heappush(open_list, (0, snake.position, snake.direction))  # (f_cost, position, direction)
-        closed_list = set() # Visited positions
+        visited = set() # Visited positions
 
         came_from = {}
-        g_costs = {snake.position: 0} # Actual cost from the start cell to each cell
+        g_costs = {snake.position: 0} # Stores the cost from start to each position
         f_costs = {snake.position: self.heuristic(snake.position, goal, grid.size)} # g_score + heuristic
 
         while open_list:
             _, current_pos, current_direction = heapq.heappop(open_list) # Pop node with the lowest f_score from heap
             
-            if current_pos in closed_list:
+            if current_pos in visited:
                 continue # Position has already been visited
                 
             # Check if the current position is a passage tile 
             if current_pos == goal:
                 return self.reconstruct_path(came_from, current_pos)
             
-            closed_list.add(current_pos) # Add current position to visited 
+            visited.add(current_pos) # Add current position to visited 
 
             # Explore neighbours
             neighbours = grid.get_neighbours(self.actions, current_pos, current_direction, snake.eat_super_food)
@@ -54,16 +56,15 @@ class Eating():
         return None
     
 
-    def reconstruct_path(self, came_from: dict[tuple[int, int]], current: tuple[int, int]) -> list[tuple[int, int]]:
-        # Reconstruct the path from start to target
-        path = []
+    def reconstruct_path(self, came_from: dict[tuple[int, int], tuple[int, int]], current: tuple[int, int]) -> deque[tuple[int, int]]:
+        """Reconstruct the path from start to target using came_from dictionary."""
+        path = deque()  # Use deque for efficient appending to the left
         while current in came_from:
-            path.append(current)
+            path.appendleft(current)  # Append to the left, so no need to reverse later
             current = came_from[current]
-        path.reverse()
-        return path
-    
+        return path  # Return deque directly
 
+    
     def find_goal(self, 
             cur_pos              : tuple[int, int], 
             food_positions       : set[tuple[int, int]], 
