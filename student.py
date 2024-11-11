@@ -4,6 +4,8 @@ import json
 import os
 import websockets
 
+from collections import deque
+
 from agent.snake import Snake
 from agent.grid import Grid
 
@@ -28,7 +30,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         exploration = Exploration()
         eating = Eating()
 
-        path = []
+        path = deque()
         prev_body = None
         
         while True:
@@ -48,21 +50,21 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 print(f"Foods: {grid.food}")
                 print(f"Super Foods: {grid.super_food}")
                 print(f"Snake Body: {snake.body}")
-                #print(f"Snake Size: {snake.size}")
+                print(f"Snake Size: {snake.size}")
                 
                 if prev_mode != snake.mode:
-                    path = [] # Clear path if mode switches
+                    path.clear() # Clear path if mode switches
 
                 if not path: # List if empty
                     if snake.mode == Mode.EXPLORATION: 
-                        path = exploration.get_path(snake, grid) # Request a new path to follow
+                        path = deque(exploration.get_path(snake, grid, True)) # Request a new path to follow
                     elif snake.mode == Mode.EATING:
-                        path = eating.get_path(snake, grid) # Request a new path to follow
+                        path = deque(eating.get_path(snake, grid)) # Request a new path to follow
                     
                 print(f"Path: {path}")
                 
                 if path:
-                    direction = determine_direction(snake.position, path.pop(0), grid.size)
+                    direction = determine_direction(snake.position, path.popleft(), grid.size)
                     key = snake.move(direction)
             
                 print(f"Key: {key}")  
@@ -93,7 +95,7 @@ def update_snake_grid(state: dict, snake: Snake, grid: Grid, prev_body: list[lis
 def snake_mode(snake: Snake, grid_food: set[tuple[int, int]], grid_super_food: set[tuple[int, int]], traverse: bool, range: int):
     if grid_food:
         snake.mode = Mode.EATING
-    elif not traverse or range < 5:
+    elif not traverse or range < 4:
         snake.eat_super_food = True
         snake.mode = Mode.EATING if grid_super_food else Mode.EXPLORATION
     else:

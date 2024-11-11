@@ -152,12 +152,12 @@ class Grid:
 
         
     def _update_visited_tiles_clear_limit(self, size): # não está a ser usado
-        if 30 <= size < 60:
-            self.visited_tiles_clear_limit = 3
-        elif size >= 60:
-            self.visited_tiles_clear_limit = 2
-        else: 
+        if size < 30:
             self.visited_tiles_clear_limit = 4
+        elif 30 <= size < 60:
+            self.visited_tiles_clear_limit = 1
+        else: 
+            self.visited_tiles_clear_limit = 1
 
     
     def _update_food(self, pos: tuple[int, int], sight: dict[int, dict[int, Tiles]]) -> bool:
@@ -340,15 +340,12 @@ class Grid:
                 continue
             
             new_position = self.calculate_pos(current_pos, action)
-        
+            
             if current_pos != new_position:
                 if eat_super_food or eat_super_food is None:
                     neighbours.add((new_position, action))
                 elif self.get_tile(new_position) != Tiles.SUPER:
                     neighbours.add((new_position, action))
-        
-            if current_pos != new_position:
-                neighbours.add((new_position, action))
 
         return neighbours
 
