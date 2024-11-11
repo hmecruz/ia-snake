@@ -44,18 +44,19 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 # Previous Assignments
                 prev_mode = snake.mode
-                if snake.body: prev_body = snake.body
-                prev_food_positions = grid.food
-                prev_super_food_positions = grid.super_food
+                if snake.body: prev_body = snake.body.copy()
+                prev_food_positions = grid.food.copy()
+                prev_super_food_positions = grid.super_food.copy()
 
                 update_snake_grid(state, snake, grid, prev_body)
 
                 print(f"Snake Position: {snake.position}")
-                print(f"Snake Direction: {snake.direction._name_}")
+                #print(f"Snake Direction: {snake.direction._name_}")
                 print(f"Grid Traverse: {grid.traverse}")
-                print(f"Sight Range: {snake.range}")
+                #print(f"Sight Range: {snake.range}")
                 print(f"Snake Mode: {snake.mode._name_}")
                 print(f"Foods: {grid.food}")
+                #print(f"Previous Foods: {prev_food_positions}")
                 print(f"Super Foods: {grid.super_food}")
                 print(f"Eat Super Food: {snake.eat_super_food}")
                 print(f"Snake Body: {snake.body}")
@@ -65,10 +66,13 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 if prev_mode != snake.mode:
                     path.clear() # Clear path if mode switches
                 elif len(prev_food_positions) != len(grid.food):
+                    #print("Clear Path: new food found")
                     path.clear() # Clear path if new food is found. Allows for path recalculation to closer food
+                    #print(f"Path: {path}")
                 elif len(prev_super_food_positions) != len(grid.super_food) and snake.eat_super_food:
+                    #print("Clear Path: new super food found")
                     path.clear() # Clear path if new super food is found and eat super food is True. Allows for path recalculation to closer super foods
-
+                    #print(f"Path: {path}")
                 
                 # Path Calculation
                 if not path: # List if empty
