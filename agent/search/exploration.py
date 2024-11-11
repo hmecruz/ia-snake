@@ -9,7 +9,7 @@ class Exploration():
     def __init__(self, actions: list[Direction] = [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH]):
         self.actions = actions
 
-    def get_path(self, snake: Snake, grid: Grid, depth: bool = False, depth_limit: None | int = 0) -> list[tuple[int, int]] | None:
+    def get_path(self, snake: Snake, grid: Grid, depth: bool = False, depth_limit: None | int = 0) -> deque[tuple[int, int]] | None:
         """
         Find the shortest path from the snake's current position to the nearest `Tiles.PASSAGE` tile using Breadth-First Search (BFS).
 
@@ -24,7 +24,7 @@ class Exploration():
                 - If `None` (default), no depth limit is applied during goal search, returns the best goal from the first goal depth.
 
         Returns:
-            list[tuple[int, int]] | None: A list of grid positions representing the path to the chosen `Tiles.PASSAGE` tile.
+            deque[tuple[int, int]] | None: A list of grid positions representing the path to the chosen `Tiles.PASSAGE` tile.
                 - Returns `None` if no path to any `Tiles.PASSAGE` tile is found.
         """
         queue = deque([(snake.position, snake.direction, 0)])  # Queue holds (position, direction, depth)
@@ -77,14 +77,13 @@ class Exploration():
         
         return best_goal
 
-    def reconstruct_path(self, came_from: dict[tuple[int, int], tuple[int, int]], current: tuple[int, int]) -> list[tuple[int, int]]:
+    def reconstruct_path(self, came_from: dict[tuple[int, int], tuple[int, int]], current: tuple[int, int]) -> deque[tuple[int, int]]:
         """Reconstruct the path from start to target using came_from dictionary."""
-        path = []
+        path = deque()  # Use deque for efficient appending to the left
         while current in came_from:
-            path.append(current)
+            path.appendleft(current)  # Append to the left, so no need to reverse later
             current = came_from[current]
-        path.reverse()
-        return path
+        return path  # Return deque directly
     
 
     def possible_actions(self, current_pos: tuple[int, int], current_direction: Direction, grid: Grid) -> set[Direction]:

@@ -1,5 +1,7 @@
 import heapq
 
+from collections import deque
+
 from consts import Direction
 
 from ..snake import Snake
@@ -9,7 +11,7 @@ class Eating():
     def __init__(self, actions: list[Direction] = [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH]):
         self.actions = actions
 
-    def get_path(self, snake: Snake, grid: Grid) -> list[tuple[int, int]]:
+    def get_path(self, snake: Snake, grid: Grid) -> deque[tuple[int, int]]:
         """Find the shortest path from the snake's current position to the closest reachable food"""
         
         goal, eat_super_food = self.find_goal(snake.position, grid.food, grid.super_food, grid.size, snake.eat_super_food)
@@ -54,16 +56,15 @@ class Eating():
         return None
     
 
-    def reconstruct_path(self, came_from: dict[tuple[int, int]], current: tuple[int, int]) -> list[tuple[int, int]]:
-        # Reconstruct the path from start to target
-        path = []
+    def reconstruct_path(self, came_from: dict[tuple[int, int], tuple[int, int]], current: tuple[int, int]) -> deque[tuple[int, int]]:
+        """Reconstruct the path from start to target using came_from dictionary."""
+        path = deque()  # Use deque for efficient appending to the left
         while current in came_from:
-            path.append(current)
+            path.appendleft(current)  # Append to the left, so no need to reverse later
             current = came_from[current]
-        path.reverse()
-        return path
-    
+        return path  # Return deque directly
 
+    
     def find_goal(self, 
             cur_pos              : tuple[int, int], 
             food_positions       : set[tuple[int, int]], 
