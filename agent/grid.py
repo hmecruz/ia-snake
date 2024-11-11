@@ -141,12 +141,12 @@ class Grid:
 
         
     def _update_visited_tiles_clear_limit(self, size):
-        if 30 <= size < 60:
-            self.visited_tiles_clear_limit = 1
-        elif size >= 60:
+        if size < 30:
+            self.visited_tiles_clear_limit = 4
+        elif 30 <= size < 60:
             self.visited_tiles_clear_limit = 1
         else: 
-            self.visited_tiles_clear_limit = 4
+            self.visited_tiles_clear_limit = 1
 
     
     def _update_food(self, pos: tuple[int, int], sight: dict[int, dict[int, Tiles]]) -> bool:

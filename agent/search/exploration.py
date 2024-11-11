@@ -101,7 +101,6 @@ class Exploration():
             if action != opposite_direction.get(current_direction)
             and grid.calculate_pos(current_pos, action) != current_pos
         }
-
         """
         possible_actions = set()
 
