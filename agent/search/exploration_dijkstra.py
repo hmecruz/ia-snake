@@ -40,6 +40,7 @@ class Exploration():
                 - Returns `None` if no path to any `Tiles.PASSAGE` tile is found.
         """
         
+        # Super Food Cost
         self.tile_costs[Tiles.SUPER] = 0 if snake.eat_super_food else 15
         
         open_list = []
@@ -74,7 +75,8 @@ class Exploration():
             neighbours = grid.get_neighbours(self.actions, current_pos, current_dir, snake.eat_super_food)
 
             for neighbor_pos, neighbor_dir in neighbours:
-                new_cost = current_cost + self.tile_costs.get(grid.get_tile(neighbor_pos), self.default_cost) # Tile weight for neighbor
+                tile_cost = self.tile_costs.get(grid.get_tile(neighbor_pos), self.default_cost) # Tile weight for neighbor
+                new_cost = current_cost + tile_cost 
 
                 if neighbor_pos not in visited or new_cost < costs.get(neighbor_pos, float('inf')): # If new neighbour or neighbour with less cost
                     visited.add(neighbor_pos)
