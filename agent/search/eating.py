@@ -15,7 +15,6 @@ class Eating():
     ):
         self.actions = actions
         self.tile_costs = tile_costs if tile_costs is not None else {
-            Tiles.PASSAGE: 3,
             Tiles.STONE: 6,    
             Tiles.VISITED: 5,
             Tiles.FOOD: 0
@@ -55,10 +54,11 @@ class Eating():
             visited.add(current_pos) # Add current position to visited 
 
             # Explore neighbours
-            neighbours = grid.get_neighbours(self.actions, current_pos, current_direction, snake.eat_super_food)
+            neighbours = grid.get_neighbours(self.actions, current_pos, current_direction)
 
             for neighbour_pos, neighbour_dir in neighbours:
-                tile_cost = self.tile_costs.get(grid.get_tile(neighbour_pos), self.default_cost) # Tile weight for neighbor
+                tile_value = grid.get_tile(neighbour_pos)
+                tile_cost = self.get_tile_cost(tile_value)  # Get the correct cost based on the tile type and age
                 tentative_g_cost = g_costs[current_pos] + tile_cost
                 
                 # Update g_score, f_score, and add to open list if it has not been processed or has a better score
@@ -120,3 +120,9 @@ class Eating():
 
         # Manhattan distance considering wrap-around
         return shortest_dx + shortest_dy
+    
+    def get_tile_cost(self, tile_value: Tiles | tuple[Tiles, int]) -> int:
+        """Return the cost associated with a tile."""
+        if isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED:
+            return self.tile_costs[Tiles.VISITED]  # Use the default cost for VISITED tiles (can adjust based on age if needed)
+        return self.tile_costs.get(tile_value, self.default_cost)
