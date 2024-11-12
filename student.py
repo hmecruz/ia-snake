@@ -3,7 +3,7 @@ import getpass
 import json
 import os
 import websockets
-from data.graph import *
+# from data.graph import *
 
 from collections import deque
 
@@ -38,14 +38,16 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         prev_food_positions = None
         prev_super_food_positions = None
         food_counter = 1
-        step_counter = 0
+        prev_step = 0
         steps_per_food: dict[int, int] = {}
         
         while True:
             try:
                 print("\n--------------------------------------------\n")
                 state = json.loads(await websocket.recv()) 
-        
+
+                current_step = state["step"]
+
                 # Previous Assignments
                 prev_mode = snake.mode
                 if snake.body: prev_body = snake.body.copy() # Shallow copy elements inside are tuples (immutable)
@@ -88,12 +90,11 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 if path:
                     direction = determine_direction(snake.position, path.popleft(), grid.size)
                     key = snake.move(direction)
-                    step_counter += 1
 
                 if grid.ate_food:
                     # Update steps_per_food
-                    steps_per_food[food_counter] = step_counter
-                    step_counter = 0
+                    steps_per_food[food_counter] = current_step - prev_step
+                    prev_step = current_step
                     food_counter += 1
 
                 print(f"Key: {key}")  
@@ -105,6 +106,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 return
             except Exception as e:
                 grid.print_grid(snake.position)
+                dict_to_json(steps_per_food)
                 raise e
                 
 
@@ -135,6 +137,25 @@ def snake_mode(snake: Snake, grid_food: set[tuple[int, int]], grid_super_food: s
         snake.mode = Mode.EATING if grid_super_food else Mode.EXPLORATION
     else:
         snake.mode = Mode.EXPLORATION  # Default mode
+
+
+def dict_to_json(steps_per_food: dict[int, int]):
+    # Define o diretório e prefixo dos ficheiros
+    directory = './data'
+    prefix = 'steps_per_food'
+
+    # Procura o próximo número de ficheiro
+    counter = 1
+    while os.path.exists(f'{directory}{prefix}{counter}.json'):
+        counter += 1
+
+    file_path = f'{directory}{prefix}{counter}.json'
+
+    # Guarda o dicionário no novo ficheiro JSON
+    with open(file_path, 'w') as json_file:
+        json.dump(steps_per_food, json_file, indent=4)
+
+    print(f'Ficheiro {file_path} criado com sucesso.')
 
 
 # DO NOT CHANGE THE LINES BELLOW

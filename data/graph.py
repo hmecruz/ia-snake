@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt # Biblioteca para o gráfico, instalar se ainda não tiver feito (pip install matplotlib)
 
-def create_graph(steps_per_food: dict[int, int]):
+def create_graph(steps_per_food: dict[int, int]): # em vez de receber dict recebe os ficheiros JSON e gera um grafico com varias linhas, uma para cada JSON
     food = list(steps_per_food.keys())     # Os meses
     steps = list(steps_per_food.values())  # Os valores correspondentes
 
