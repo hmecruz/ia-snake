@@ -3,7 +3,7 @@ import getpass
 import json
 import os
 import websockets
-import matplotlib.pyplot as plt # Biblioteca para o gráfico, instalar se ainda não tiver feito (pip install matplotlib)
+from data.graph import *
 
 from collections import deque
 
@@ -104,8 +104,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 print("Server has cleanly disconnected us")
                 return
             
-            finally:
-                create_graph(steps_per_food)
+            except Exception as e:
+                
 
 
 def update_snake_grid(state: dict, snake: Snake, grid: Grid, prev_body: list[list[int]]):
@@ -135,24 +135,6 @@ def snake_mode(snake: Snake, grid_food: set[tuple[int, int]], grid_super_food: s
     else:
         snake.mode = Mode.EXPLORATION  # Default mode
 
-def create_graph(steps_per_food: dict[int, int]):
-    food = list(steps_per_food.keys())     # Os meses
-    steps = list(steps_per_food.values())  # Os valores correspondentes
-
-    # Criar o gráfico de barras
-    plt.figure(figsize=(10, 5))  # Define o tamanho da figura
-    plt.bar(food, steps, color='skyblue')  # Cria o gráfico de barras com cor
-
-    # Adicionar título e rótulos
-    plt.title('Passos dados até food')
-    plt.xlabel('Food')
-    plt.ylabel('Steps')
-
-    # Salvar o gráfico como um arquivo de imagem
-    plt.savefig('steps_per_food.png')  # Salva como 'grafico_vendas.png' no diretório atual
-
-    # Exibir o gráfico (opcional)
-    # plt.show()
 
 # DO NOT CHANGE THE LINES BELLOW
 # You can change the default values using the command line, example:
