@@ -3,6 +3,7 @@ import getpass
 import json
 import os
 import websockets
+import matplotlib.pyplot as plt # Biblioteca para o gráfico, instalar se ainda não tiver feito (pip install matplotlib)
 
 from collections import deque
 
@@ -36,6 +37,9 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         prev_body = None
         prev_food_positions = None
         prev_super_food_positions = None
+        food_counter = 1
+        step_counter = 0
+        steps_per_food: dict[int, int] = {}
         
         while True:
             try:
@@ -82,7 +86,14 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 if path:
                     direction = determine_direction(snake.position, path.popleft(), grid.size)
                     key = snake.move(direction)
-            
+                    step_counter += 1
+
+                if grid.ate_food:
+                    # Update steps_per_food
+                    steps_per_food[food_counter] = step_counter
+                    step_counter = 0
+                    food_counter += 1
+
                 print(f"Key: {key}")  
                 grid.print_grid(snake.position)
                 await websocket.send(json.dumps({"cmd": "key", "key": key}))  
@@ -90,6 +101,25 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
                 return
+            
+            finally:
+                food = list(steps_per_food.keys())     # Os meses
+                steps = list(steps_per_food.values())  # Os valores correspondentes
+
+                # Criar o gráfico de barras
+                plt.figure(figsize=(10, 5))  # Define o tamanho da figura
+                plt.bar(food, steps, color='skyblue')  # Cria o gráfico de barras com cor
+
+                # Adicionar título e rótulos
+                plt.title('Passos dados até food')
+                plt.xlabel('Food')
+                plt.ylabel('Steps')
+
+                # Salvar o gráfico como um arquivo de imagem
+                plt.savefig('steps_per_food.png')  # Salva como 'grafico_vendas.png' no diretório atual
+
+                # Exibir o gráfico (opcional)
+                # plt.show()
 
 
 def update_snake_grid(state: dict, snake: Snake, grid: Grid, prev_body: list[list[int]]):
