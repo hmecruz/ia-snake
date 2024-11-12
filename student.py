@@ -1,3 +1,4 @@
+import time
 import asyncio
 import getpass
 import json
@@ -41,7 +42,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
             try:
                 print("\n--------------------------------------------\n")
                 state = json.loads(await websocket.recv()) 
-        
+                #start_time = time.time()
+
                 # Previous Assignments
                 prev_mode = snake.mode
                 if snake.body: prev_body = snake.body.copy() # Shallow copy elements inside are tuples (immutable)
@@ -49,7 +51,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 prev_super_food_positions = grid.super_food.copy() # Shallow copy elements inside are tuples (immutable)
 
                 update_snake_grid(state, snake, grid, prev_body)
-
+                
                 print(f"Snake Position: {snake.position}")
                 print(f"Snake Direction: {snake.direction._name_}")
                 print(f"Grid Traverse: {grid.traverse}")
@@ -87,6 +89,11 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
             
                 print(f"Key: {key}")  
                 grid.print_grid(snake.position)
+
+                
+                #end_time = time.time()
+                #duration_ms = (end_time - start_time) * 1000
+                #print(f"Processing time: {duration_ms:.2f} ms")
                 await websocket.send(json.dumps({"cmd": "key", "key": key}))  
                 
             except websockets.exceptions.ConnectionClosedOK:
