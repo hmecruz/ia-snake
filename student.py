@@ -63,7 +63,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 #print(f"Previous Foods: {prev_food_positions}")
                 print(f"Super Foods: {grid.super_food}")
                 print(f"Eat Super Food: {snake.eat_super_food}")
-                print(f"Snake Body: {snake.body}")
+                #print(f"Snake Body: {snake.body}")
                 print(f"Snake Size: {snake.size}")
 
                 
@@ -103,8 +103,9 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
                 return
-            
             except Exception as e:
+                grid.print_grid(snake.position)
+                raise e
                 
 
 
