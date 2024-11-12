@@ -1,9 +1,10 @@
+import os
+import json
 import time
+import argparse
+import websockets
 import asyncio
 import getpass
-import json
-import os
-import websockets
 
 from collections import deque
 
@@ -11,7 +12,6 @@ from agent.snake import Snake
 from agent.grid import Grid
 
 from agent.search.exploration_dijkstra import Exploration
-# from agent.search.exploration_bfs import Exploration
 from agent.search.eating import Eating
 
 from agent.utils.utils import determine_direction, convert_sight
@@ -19,7 +19,7 @@ from agent.utils.utils import determine_direction, convert_sight
 from consts import Mode
 
 
-async def agent_loop(server_address="localhost:8000", agent_name="student"):
+async def agent_loop(server_address="localhost:8000", agent_name="student", file_name=None):
     async with websockets.connect(f"ws://{server_address}/player") as websocket:
         await websocket.send(json.dumps({"cmd": "join", "name": agent_name}))
 
@@ -37,12 +37,18 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         prev_body = None
         prev_food_positions = None
         prev_super_food_positions = None
+
+        food_counter = 1
+        food_step = 0
+        steps_per_food = deque()
         
         while True:
             try:
                 print("\n--------------------------------------------\n")
                 state = json.loads(await websocket.recv()) 
                 #start_time = time.time()
+
+                current_step = state["step"]
 
                 # Previous Assignments
                 prev_mode = snake.mode
@@ -86,10 +92,16 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 if path:
                     direction = determine_direction(snake.position, path.popleft(), grid.size)
                     key = snake.move(direction)
+
+                if file_name and grid.ate_food:
+                    (food_counter, current_step - food_step)
+                    steps_per_food.append((food_counter, current_step - food_step))
+                    food_step = current_step
+                    food_counter += 1
+
             
                 print(f"Key: {key}")  
                 grid.print_grid(snake.position)
-
                 
                 #end_time = time.time()
                 #duration_ms = (end_time - start_time) * 1000
@@ -101,6 +113,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 return
             except Exception as e:
                 grid.print_grid(snake.position)
+                if file_name:
+                    export_steps_per_food(file_name, steps_per_food)
                 raise e
                 
 
@@ -132,7 +146,23 @@ def snake_mode(snake: Snake, grid_food: set[tuple[int, int]], grid_super_food: s
     else:
         snake.mode = Mode.EXPLORATION  # Default mode
 
+def export_steps_per_food(file_name: str, steps_per_food: deque[tuple[int, int]]):
+    # Define o diretório e prefixo dos ficheiros
+    dir = './data'
+    os.makedirs(dir, exist_ok=True)
 
+    # Define the full path for the output file
+    file_path = os.path.join(dir, file_name)
+
+    with open(file_path, 'a') as json_file:
+        json.dump(list(steps_per_food), json_file, indent=4)
+        json_file.write("\n")  # Add newline after each entry for clarity
+    
+    print(f"Steps data saved to {file_path}")
+
+
+# Uncomment this for the delivery
+"""
 # DO NOT CHANGE THE LINES BELLOW
 # You can change the default values using the command line, example:
 # $ NAME='arrumador' python3 client.py
@@ -141,4 +171,17 @@ SERVER = os.environ.get("SERVER", "localhost")
 PORT = os.environ.get("PORT", "8000")
 NAME = os.environ.get("NAME", getpass.getuser())
 loop.run_until_complete(agent_loop(f"{SERVER}:{PORT}", NAME))
+"""
 
+# Delete this for the delivery
+if __name__ == "__main__":
+    # Parse command line arguments for file name
+    parser = argparse.ArgumentParser(description="Run Snake agent")
+    parser.add_argument('-out', '--output', type=str, required=False, help="Output file name for steps data")
+    args = parser.parse_args()
+
+loop = asyncio.get_event_loop()
+SERVER = os.environ.get("SERVER", "localhost")
+PORT = os.environ.get("PORT", "8000")
+NAME = os.environ.get("NAME", getpass.getuser())
+loop.run_until_complete(agent_loop(f"{SERVER}:{PORT}", NAME, args.output))
