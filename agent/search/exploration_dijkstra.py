@@ -15,29 +15,27 @@ class Exploration():
     ):
         self.actions = actions
         self.tile_costs = tile_costs if tile_costs is not None else {
-            Tiles.PASSAGE: 1,
-            Tiles.STONE: 5,    
-            Tiles.VISITED: 4
+            Tiles.VISITED: 1,
+            Tiles.STONE: 5
         }
         self.default_cost = 1
 
     def get_path(self, snake: Snake, grid: Grid, depth: bool = False, depth_limit: None | int = 0) -> deque[tuple[int, int]] | None:
         """
-        Find the least costing path from the snake's current position to the nearest `Tiles.PASSAGE` tile using Dijkstra's algorithm.
+        Find the least costing path from the snake's current position to the best goal tile, considering `Tiles.VISITED` tiles with an age of at least 2. Uses a variant of Dijkstra's algorithm to find paths in a grid.
 
         Parameters:
-            snake (Snake): The snake object containing its current position and direction.
-            grid (Grid): The grid on which the snake navigates.
+            snake (Snake): The snake object containing its current position, direction, and state (e.g., if it has eaten super food).
+            grid (Grid): The grid on which the snake navigates, used to retrieve tile information and neighbours.
             depth (bool): 
-                - If `False`, the search returns the first `Tiles.PASSAGE` tile found, focusing on the shortest path.
-                - If `True`, the search collects all reachable `Tiles.PASSAGE` tiles within a specified depth (if `depth_limit` is set) and returns the tile with the most adjacent `Tiles.PASSAGE` tiles.
+                - If `False`, the search will return the first valid `Tiles.VISITED` tile found, based on cost.
+                - If `True`, the search collects all reachable valid `Tiles.VISITED` tiles and selects the one with the lowest combined cost (cost of reaching the goal minus the sum of the ages of surrounding `Tiles.VISITED` tiles).
             depth_limit (int | None): 
-                - Limits the search depth if set to an integer. Only goals within this depth are considered when `depth` is `True`.
-                - If `None` (default), no depth limit is applied during goal search, returns the best goal from the first goal depth.
+                - If `depth` is `True`, this limits how far the search will explore. If not specified (default `None`), it will search until all goals are found within the first goal depth and select the best goal.
 
         Returns:
-            deque[tuple[int, int]] | None: A list of grid positions representing the path to the chosen `Tiles.PASSAGE` tile.
-                - Returns `None` if no path to any `Tiles.PASSAGE` tile is found.
+            deque[tuple[int, int]] | None: A deque representing the path to the selected goal tile, or `None` if no path to any valid goal is found.
+                - The path will contain grid positions leading to the best `Tiles.VISITED` tile.
         """
         
         # Super Food Cost
@@ -50,56 +48,73 @@ class Exploration():
         came_from = {}  # Tracks the path
         costs = {snake.position: 0}  # Cost to reach each position
         
-        goals = set()
+        goals = set() # Goals hold (goal_pos, cost)
         first_goal_depth = 0  # Tracks the depth of the first goal found
         
         while open_list:
             current_cost, current_pos, current_dir, current_depth = heapq.heappop(open_list)
             
-            # Stop if depth limit exceeded in depth mode
+            # Early exit if we exceed depth limit in depth mode
             if goals and depth and current_depth > first_goal_depth:
                 if current_depth > depth_limit:
                     best_goal = self.select_best_goal(goals, grid, snake.range)
                     return self.reconstruct_path(came_from, best_goal)
-
-            # Check if the current position is a passage tile
-            if grid.get_tile(current_pos) == Tiles.PASSAGE:
+                
+            # Check if we reached a valid goal (Tiles.VISITED with age >= 2)
+            tile_value = grid.get_tile(current_pos)
+            if self.is_valid_goal(tile_value):
                 if depth:
                     if not goals:
                         first_goal_depth = current_depth
-                    goals.add(current_pos)
+                    goals.add((current_pos, current_cost))
                 else:
                     return self.reconstruct_path(came_from, current_pos)
 
-            # Explore neighbors
-            neighbours = grid.get_neighbours(self.actions, current_pos, current_dir, snake.eat_super_food)
+            # Explore neighbours
+            neighbours = grid.get_neighbours(self.actions, current_pos, current_dir)
 
-            for neighbor_pos, neighbor_dir in neighbours:
-                tile_cost = self.tile_costs.get(grid.get_tile(neighbor_pos), self.default_cost) # Tile weight for neighbor
-                new_cost = current_cost + tile_cost 
+            for neighbour_pos, neighbour_dir in neighbours:
+                tile_value = grid.get_tile(neighbour_pos)
+                neighbour_cost = self.get_tile_cost(tile_value)
+                new_cost = current_cost + neighbour_cost
 
-                if neighbor_pos not in visited or new_cost < costs.get(neighbor_pos, float('inf')): # If new neighbour or neighbour with less cost
-                    visited.add(neighbor_pos)
-                    costs[neighbor_pos] = new_cost
-                    heapq.heappush(open_list, (new_cost, neighbor_pos, neighbor_dir, current_depth + 1))
-                    came_from[neighbor_pos] = current_pos
+                if neighbour_pos not in visited or new_cost < costs.get(neighbour_pos, float('inf')): # If cheaper path
+                    visited.add(neighbour_pos)
+                    costs[neighbour_pos] = new_cost
+                    heapq.heappush(open_list, (new_cost, neighbour_pos, neighbour_dir, current_depth + 1))
+                    came_from[neighbour_pos] = current_pos
 
         print("No path to passage found")
         return None
     
+    
+    def is_valid_goal(self, tile_value: Tiles | tuple[Tiles, int]) -> bool:
+        """Check if the tile is a valid goal (Tiles.VISITED with age >= 2)."""
+        return isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED and tile_value[1] >= 2
+    
+    def get_tile_cost(self, tile_value: Tiles | tuple[Tiles, int]) -> int :
+        """Return the cost associated with a tile."""
+        if isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED:
+            return self.tile_costs[Tiles.VISITED]
+        return self.tile_costs.get(tile_value, self.default_cost)
+
     def select_best_goal(self, goals: set[tuple[int, int]], grid: Grid, size: int) -> tuple[int, int]:
         """Select the goal with the maximum number of Tiles.PASSAGE in zone."""
-        max_passages = -1
         best_goal = None
+        min_goal_value = float('inf')
         
-        for goal in goals:
-            zone = grid.get_zone(goal, size)
-            passages = sum(1 for row in zone.values() for tile in row.values() if tile == Tiles.PASSAGE)
-            
-            if passages > max_passages:
-                max_passages = passages
-                best_goal = goal
+        for goal_pos, goal_cost in goals:
+            zone = grid.get_zone(goal_pos, size)
+            sum_ages = sum(
+                tile[1] for row in zone.values() for tile in row.values() 
+                if isinstance(tile, tuple) and tile[0] == Tiles.VISITED
+            )
+            goal_value = goal_cost - sum_ages  # Lower value corresponds to a better exploration
         
+            if goal_value < min_goal_value:
+                min_goal_value = goal_value
+                best_goal = goal_pos
+
         return best_goal
 
     def reconstruct_path(self, came_from: dict[tuple[int, int], tuple[int, int]], current: tuple[int, int]) -> deque[tuple[int, int]]:

@@ -28,7 +28,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         grid = state["map"]
         
         snake = Snake()
-        grid = Grid(size, grid)
+        grid = Grid(size, grid, 10)
         exploration = Exploration()
         eating = Eating()
 
@@ -45,7 +45,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
             try:
                 print("\n--------------------------------------------\n")
                 state = json.loads(await websocket.recv()) 
-
+        
                 # Previous Assignments
                 prev_mode = snake.mode
                 if snake.body: prev_body = snake.body.copy() # Shallow copy elements inside are tuples (immutable)
@@ -55,9 +55,9 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 update_snake_grid(state, snake, grid, prev_body)
 
                 print(f"Snake Position: {snake.position}")
-                #print(f"Snake Direction: {snake.direction._name_}")
+                print(f"Snake Direction: {snake.direction._name_}")
                 print(f"Grid Traverse: {grid.traverse}")
-                #print(f"Sight Range: {snake.range}")
+                print(f"Sight Range: {snake.range}")
                 print(f"Snake Mode: {snake.mode._name_}")
                 print(f"Foods: {grid.food}")
                 #print(f"Previous Foods: {prev_food_positions}")
@@ -66,6 +66,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 print(f"Snake Body: {snake.body}")
                 print(f"Snake Size: {snake.size}")
 
+                
                 # Path Clearence Conditions --> TODO Make this a function in the future if it gets bigger (it will)
                 if prev_mode != snake.mode:
                     path.clear() # Clear path if mode switches
@@ -73,7 +74,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     path.clear() # Clear path if new food is found. Allows for path recalculation to closer food
                 elif len(prev_super_food_positions) != len(grid.super_food) and snake.eat_super_food:
                     path.clear() # Clear path if new super food is found and eat super food is True. Allows for path recalculation to closer super foods
-                
+
+
                 # Path Calculation
                 if not path: # List if empty
                     if snake.mode == Mode.EXPLORATION: 
@@ -115,10 +117,12 @@ def update_snake_grid(state: dict, snake: Snake, grid: Grid, prev_body: list[lis
     sight = convert_sight(sight) 
     range = state["range"]
     traverse = state["traverse"]
+
+    step = state["step"]
     
     # Always update snake first
     snake.update(pos, direction, body, sight, range)
-    grid.update(pos, snake.body, snake.size, prev_body, snake.sight, traverse)
+    grid.update(pos, snake.body, snake.size, prev_body, snake.sight, traverse, step)
     snake_mode(snake, grid.food, grid.super_food, traverse, range)
 
 

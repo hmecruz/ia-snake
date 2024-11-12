@@ -98,13 +98,6 @@ class Exploration():
             Direction.WEST: Direction.EAST,
         }
 
-        """
-        possible_actions = {
-            action for action in self.actions
-            if action != opposite_direction.get(current_dir)
-            and grid.calculate_pos(current_pos, action) != current_pos
-        }
-        """
         possible_actions = set()
 
         for action in self.actions:
