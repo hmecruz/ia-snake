@@ -112,6 +112,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                 print("Server has cleanly disconnected us")
                 return
             except Exception as e:
+                print("Entrei")
                 grid.print_grid(snake.position)
                 if file_name:
                     export_steps_per_food(file_name, steps_per_food)
@@ -147,8 +148,7 @@ def snake_mode(snake: Snake, grid_food: set[tuple[int, int]], grid_super_food: s
         snake.mode = Mode.EXPLORATION  # Default mode
 
 def export_steps_per_food(file_name: str, steps_per_food: deque[tuple[int, int]]):
-    # Define o diretório e prefixo dos ficheiros
-    dir = './data'
+    dir = './agent/data'
     os.makedirs(dir, exist_ok=True)
 
     # Define the full path for the output file

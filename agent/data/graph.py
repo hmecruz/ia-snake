@@ -28,6 +28,8 @@ def create_graph(json_files: list[str]): # testar
     # Exibir o gráfico (opcional)
     # plt.show()
 
+create_graph()
+
 
 
 # How to use:
