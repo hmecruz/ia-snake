@@ -15,4 +15,4 @@ xterm -geometry 1800x1012 -hold -e "cd $DIR; $ACTIVATE_CMD; python3 viewer.py" &
 sleep 0.1
 
 # Abra o terceiro terminal em modo "fullscreen"
-xterm -geometry 1800x1012 -hold -e "cd $DIR; $ACTIVATE_CMD; python3 student.py" &
+xterm -geometry 1800x1012 -hold -e "cd $DIR; $ACTIVATE_CMD; python3 student.py -out bananas.json" & # Mudar o nome do ficheiro json para criar novos ficheiros
