@@ -103,8 +103,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 return
             
             finally:
-                #create_graph(steps_per_food)
-                pass
+                create_graph(steps_per_food)
 
 
 def update_snake_grid(state: dict, snake: Snake, grid: Grid, prev_body: list[list[int]]):
