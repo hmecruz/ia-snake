@@ -141,7 +141,7 @@ def snake_mode(snake: Snake, grid_food: set[tuple[int, int]], grid_super_food: s
 
 def dict_to_json(steps_per_food: dict[int, int]):
     # Define o diretório e prefixo dos ficheiros
-    directory = './data'
+    directory = './data/'
     prefix = 'steps_per_food'
 
     # Procura o próximo número de ficheiro
