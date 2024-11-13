@@ -52,9 +52,9 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
 
                 # Previous Assignments
                 prev_mode = snake.mode
-                if snake.body: prev_body = snake.body.copy() # Shallow copy elements inside are tuples (immutable)
-                prev_food_positions = grid.food.copy() # Shallow copy elements inside are tuples (immutable)
-                prev_super_food_positions = grid.super_food.copy() # Shallow copy elements inside are tuples (immutable)
+                if snake.body: prev_body = snake.body.copy() # Shallow copy, elements inside are tuples (immutable)
+                prev_food_positions = grid.food.copy() # Shallow copy, elements inside are tuples (immutable)
+                prev_super_food_positions = grid.super_food.copy() # Shallow copy, elements inside are tuples (immutable)
 
                 update_snake_grid(state, snake, grid, prev_body)
                 
@@ -117,7 +117,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                     export_steps_per_food(file_name, steps_per_food)
                 raise e
                 
-
 
 def update_snake_grid(state: dict, snake: Snake, grid: Grid, prev_body: list[list[int]]):
     """Update the snake and grid objects based on the new game state."""
