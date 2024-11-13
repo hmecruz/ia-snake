@@ -22,3 +22,7 @@ venv/
 
 #Log files
 log.txt
+
+# Graphs and Data files
+agent/data/*.png
+*.json

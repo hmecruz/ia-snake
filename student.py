@@ -28,7 +28,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
         grid = state["map"]
         
         snake = Snake()
-        grid = Grid(size, grid, 10)
+        grid = Grid(size, grid, 5, 5)
         exploration = Exploration()
         eating = Eating()
 
