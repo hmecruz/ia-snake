@@ -27,7 +27,7 @@ class Eating():
         # Super Food Cost
         self.tile_costs[Tiles.SUPER] = 2 if snake.eat_super_food else 15
 
-        goal, eat_super_food = self.find_goal(snake.position, grid.food, grid.super_food, grid.size, snake.eat_super_food)
+        goal, eat_super_food = self.find_goal(snake.position, grid.food, grid.super_food, grid.size, grid.traverse, snake.eat_super_food)
         if not goal and eat_super_food: 
             raise ValueError(f"No food found in {grid.food}. No food found in {grid.super_food}")
         elif not goal: 
@@ -39,7 +39,7 @@ class Eating():
 
         came_from = {}
         g_costs = {snake.position: 0} # Stores the cost from start to each position
-        f_costs = {snake.position: self.heuristic(snake.position, goal, grid.size)} # g_score + heuristic
+        f_costs = {snake.position: self.heuristic(snake.position, goal, grid.size, grid.traverse)} # g_score + heuristic
 
         while open_list:
             _, current_pos, current_direction = heapq.heappop(open_list) # Pop node with the lowest f_score from heap
@@ -65,7 +65,7 @@ class Eating():
                 if neighbour_pos not in g_costs or tentative_g_cost < g_costs[neighbour_pos]:
                     came_from[neighbour_pos] = current_pos
                     g_costs[neighbour_pos] = tentative_g_cost
-                    f_cost = tentative_g_cost + self.heuristic(neighbour_pos, goal, grid.size)
+                    f_cost = tentative_g_cost + self.heuristic(neighbour_pos, goal, grid.size, grid.traverse)
                     f_costs[neighbour_pos] = f_cost
                     heapq.heappush(open_list, (f_cost, neighbour_pos, neighbour_dir))
 
@@ -87,6 +87,7 @@ class Eating():
             food_positions       : set[tuple[int, int]], 
             super_food_positions : set[tuple[int, int]],
             grid_size            : tuple[int, int],
+            grid_traverse        : bool,
             eat_super_food       : bool
             ) -> tuple[int, int] | None:
         """Find the closest food position to the start position"""
@@ -97,10 +98,10 @@ class Eating():
         target_positions = food_positions | super_food_positions if eat_super_food else food_positions
 
         # Return the closest position to cur_pos from the target positions
-        return min(target_positions, key=lambda pos: self.heuristic(cur_pos, pos, grid_size)), eat_super_food
+        return min(target_positions, key=lambda pos: self.heuristic(cur_pos, pos, grid_size, grid_traverse)), eat_super_food
 
     
-    def heuristic(self, pos: tuple[int, int], goal: tuple[int, int], grid_size: tuple[int, int]) -> int:
+    def heuristic(self, pos: tuple[int, int], goal: tuple[int, int], grid_size: tuple[int, int], grid_traverse: bool) -> int:
         """Heuristic function that calculates Manhattan distance with wrap-around consideration."""
         pos_x, pos_y = pos
         goal_x, goal_y = goal
@@ -109,6 +110,9 @@ class Eating():
         # Calculate the direct distance along each axis
         dx = abs(pos_x - goal_x)
         dy = abs(pos_y - goal_y)
+
+        if not grid_traverse:
+            return dx + dy
 
         # Calculate wrap-around distances along each axis
         wrap_dx = grid_width - dx
