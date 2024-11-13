@@ -70,7 +70,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                 #print(f"Snake Body: {snake.body}")
                 print(f"Snake Size: {snake.size}")
 
-                
                 # Path Clearence Conditions --> TODO Make this a function in the future if it gets bigger (it will)
                 if prev_mode != snake.mode:
                     path.clear() # Clear path if mode switches
@@ -132,7 +131,7 @@ def update_snake_grid(state: dict, snake: Snake, grid: Grid, prev_body: list[lis
     
     # Always update snake first
     snake.update(pos, direction, body, sight, range)
-    grid.update(pos, snake.body, snake.size, prev_body, snake.sight, traverse, step)
+    grid.update(pos, snake.body, prev_body, snake.sight, traverse, step)
     snake_mode(snake, grid.food, grid.super_food, traverse, range)
 
 

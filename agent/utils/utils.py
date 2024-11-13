@@ -11,7 +11,6 @@ def determine_direction(
     cur_x, cur_y = current_pos
     next_x, next_y = next_pos
 
-    cur_x, cur_y = current_pos
     dx = next_x - cur_x 
     dy = next_y - cur_y
 

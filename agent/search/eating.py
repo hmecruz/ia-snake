@@ -1,5 +1,6 @@
 import heapq
 
+from typing import Optional, Union
 from collections import deque
 
 from consts import Direction, Tiles
@@ -7,15 +8,16 @@ from consts import Direction, Tiles
 from ..snake import Snake
 from ..grid import Grid
 
-class Eating():
+class Eating:
     def __init__(
         self, 
-        actions: list[Direction] = [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH],
-        tile_costs: dict[Tiles, int] | None = None
+        actions: Optional[list[Direction]] = None, 
+        tile_costs: Optional[dict[Tiles, int]] = None
     ):
-        self.actions = actions
-        self.tile_costs = tile_costs if tile_costs is not None else {
-            Tiles.STONE: 6,    
+        self.actions = actions or [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH]
+
+        self.tile_costs = tile_costs or {
+            Tiles.STONE: 6,
             Tiles.VISITED: 5,
             Tiles.FOOD: 0
         }
@@ -89,7 +91,7 @@ class Eating():
             grid_size            : tuple[int, int],
             grid_traverse        : bool,
             eat_super_food       : bool
-            ) -> tuple[int, int] | None:
+            ) -> Optional[tuple[int, int]]:
         """Find the closest food position to the start position"""
         
         if not food_positions and not (eat_super_food and super_food_positions):
@@ -125,7 +127,7 @@ class Eating():
         # Manhattan distance considering wrap-around
         return shortest_dx + shortest_dy
     
-    def get_tile_cost(self, tile_value: Tiles | tuple[Tiles, int]) -> int:
+    def get_tile_cost(self, tile_value: Union[Tiles, tuple[Tiles, int]]) -> int:
         """Return the cost associated with a tile."""
         if isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED:
             return self.tile_costs[Tiles.VISITED]  # Use the default cost for VISITED tiles (can adjust based on age if needed)

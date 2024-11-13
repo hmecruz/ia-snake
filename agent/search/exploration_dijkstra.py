@@ -1,5 +1,6 @@
 import heapq
 
+from typing import Union, Optional
 from collections import deque
 
 from consts import Tiles, Direction
@@ -7,20 +8,21 @@ from consts import Tiles, Direction
 from ..snake import Snake
 from ..grid import Grid
 
-class Exploration():
+class Exploration:
     def __init__(
         self, 
-        actions: list[Direction] = [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH], 
-        tile_costs: dict[Tiles, int] | None = None
+        actions: Optional[list[Direction]] = None, 
+        tile_costs: Optional[dict[Tiles, int]] = None
     ):
-        self.actions = actions
-        self.tile_costs = tile_costs if tile_costs is not None else {
+        self.actions = actions or [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH]
+
+        self.tile_costs = tile_costs or {
             Tiles.VISITED: 1,
             Tiles.STONE: 5
         }
         self.default_cost = 1
 
-    def get_path(self, snake: Snake, grid: Grid, depth: bool = False, depth_limit: None | int = 0) -> deque[tuple[int, int]] | None:
+    def get_path(self, snake: Snake, grid: Grid, depth: bool = False, depth_limit: Optional[int] = 0) -> Optional[deque[tuple[int, int]]]: 
         """
         Find the least costing path from the snake's current position to the best goal tile, considering `Tiles.VISITED` tiles with an age of at least 2. Uses a variant of Dijkstra's algorithm to find paths in a grid.
 
@@ -88,7 +90,7 @@ class Exploration():
         return None
     
     
-    def is_valid_goal(self, tile_value: Tiles | tuple[Tiles, int]) -> bool:
+    def is_valid_goal(self, tile_value: Union[Tiles, tuple[Tiles, int]]) -> bool:
         """Check if the tile is a valid goal (Tiles.VISITED with age >= 2)."""
         return isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED and tile_value[1] >= 2
     

@@ -4,14 +4,13 @@ from consts import Direction, Mode, Tiles
 
 class Snake:
     def __init__(self):
-        self._pos = None # Head position
-        self._dir = None 
-        self._body = None
-        self._size = None 
-        self._sight = None
-        self._range = None
-        self._mode = None
-        self._eat_super_food = False
+        self._pos: tuple[int, int] = None  # Head position
+        self._dir: Direction = None
+        self._body: list[list[int]] = None
+        self._sight: dict[int, dict[int, Tiles]] = None
+        self._range: int = None
+        self._mode: Mode = None
+        self._eat_super_food: bool = False
     
     def __repr__(self):
         return (f"Snake(position={self.position}, direction={self.direction}, "
@@ -29,6 +28,7 @@ class Snake:
         copied._body = copy.deepcopy(self._body, memo)
         copied._sight = copy.deepcopy(self._sight, memo)
         copied._range = self._range
+        copied._eat_super_food = self._eat_super_food
         return copied
 
     @property
@@ -68,12 +68,6 @@ class Snake:
     def size(self) -> int:
         return len(self._body)
 
-    @size.setter
-    def size(self, new_size: int):
-        if not isinstance(new_size, int) or new_size < 0:
-            raise ValueError(f"Invalid size: {new_size}. Expected a non-negative integer.")
-        self._size = new_size
-        
     @property
     def sight(self) -> dict[int, dict[int, Tiles]]:
         return self._sight
@@ -128,14 +122,10 @@ class Snake:
         self.position = pos
         self.direction = dir
         self.body = body
-        self.size = self.get_size()
         self.sight = sight
         self.range = range
         self.eat_super_food = eat_super_food
 
-    
-    def get_size(self):
-        return len(self.body)
 
     def move(self, direction: Direction) -> str:
         direction_to_key = {
