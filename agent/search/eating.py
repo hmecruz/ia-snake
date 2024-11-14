@@ -23,18 +23,28 @@ class Eating:
         }
         self.default_cost = 1
 
-    def get_path(self, snake: Snake, grid: Grid) -> deque[tuple[int, int]]:
+    def get_path(self, snake: Snake, grid: Grid) -> Optional[deque[tuple[int, int]]]:
         """Find the lowest cost path using A* from the snake's current position to the closest reachable food"""
         
         # Super Food Cost
         self.tile_costs[Tiles.SUPER] = 2 if snake.eat_super_food else 15
 
-        goal, eat_super_food = self.find_goal(snake.position, grid.food, grid.super_food, grid.size, grid.traverse, snake.eat_super_food)
-        if not goal and eat_super_food: 
+        goals_queue = self.sort_goals(snake.position, grid.food, grid.super_food, grid.size, grid.traverse, snake.eat_super_food)
+        if not goals_queue and snake.eat_super_food: 
             raise ValueError(f"No food found in grid.food: {grid.food}. No food found in grid.super_food: {grid.super_food}")
-        elif not goal: 
+        elif not goals_queue: 
             raise ValueError(f"No food found in grid.food: {grid.food}.")
             
+        for goal in goals_queue:
+            path = self.compute_path_to_goal(snake, grid, goal)
+            if path is not None:
+                return path
+        
+        print(f"No valid path found to any goal")
+        return None
+
+    
+    def compute_path_to_goal(self, snake: Snake, grid: Grid, goal: tuple[int, int]) -> Optional[deque[tuple[int, int]]]:
         open_list = []
         heapq.heappush(open_list, (0, snake.position, snake.direction))  # (f_cost, position, direction)
         visited = set() # Visited positions
@@ -71,9 +81,8 @@ class Eating:
                     f_costs[neighbour_pos] = f_cost
                     heapq.heappush(open_list, (f_cost, neighbour_pos, neighbour_dir))
 
-        print("No path found")
-        return None
-    
+        return None # No path to goal found
+
 
     def reconstruct_path(self, came_from: dict[tuple[int, int], tuple[int, int]], current: tuple[int, int]) -> deque[tuple[int, int]]:
         """Reconstruct the path from start to target using came_from dictionary."""
@@ -84,25 +93,26 @@ class Eating:
         return path  # Return deque directly
 
     
-    def find_goal(self, 
+    def sort_goals(self, 
             cur_pos              : tuple[int, int], 
             food_positions       : set[tuple[int, int]], 
             super_food_positions : set[tuple[int, int]],
             grid_size            : tuple[int, int],
             grid_traverse        : bool,
             eat_super_food       : bool
-            ) -> Optional[tuple[int, int]]:
+            ) -> Optional[list[tuple[int, int]]]:
         """Find the closest food position to the start position"""
         
         if not food_positions and not (eat_super_food and super_food_positions):
-            return None, eat_super_food  # No food available to target
+            return None  # No food available to target
 
         target_positions = food_positions | super_food_positions if eat_super_food else food_positions
 
         # Return the closest position to cur_pos from the target positions
-        return min(target_positions, key=lambda pos: self.heuristic(cur_pos, pos, grid_size, grid_traverse)), eat_super_food
-
+        sorted_goals = sorted(target_positions, key=lambda pos: self.heuristic(cur_pos, pos, grid_size, grid_traverse))
+        return sorted_goals[:3]  # Only try the closest 3 goals
     
+
     def heuristic(self, pos: tuple[int, int], goal: tuple[int, int], grid_size: tuple[int, int], grid_traverse: bool) -> int:
         """Heuristic function that calculates Manhattan distance with wrap-around consideration."""
         pos_x, pos_y = pos
