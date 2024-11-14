@@ -31,9 +31,9 @@ class Eating:
 
         goal, eat_super_food = self.find_goal(snake.position, grid.food, grid.super_food, grid.size, grid.traverse, snake.eat_super_food)
         if not goal and eat_super_food: 
-            raise ValueError(f"No food found in {grid.food}. No food found in {grid.super_food}")
+            raise ValueError(f"No food found in grid.food: {grid.food}. No food found in grid.super_food: {grid.super_food}")
         elif not goal: 
-            raise ValueError(f"No food found in {grid.food}.")
+            raise ValueError(f"No food found in grid.food: {grid.food}.")
             
         open_list = []
         heapq.heappush(open_list, (0, snake.position, snake.direction))  # (f_cost, position, direction)

@@ -136,13 +136,20 @@ def update_snake_grid(state: dict, snake: Snake, grid: Grid, prev_body: list[lis
 
 
 def snake_mode(snake: Snake, grid_food: set[tuple[int, int]], grid_super_food: set[tuple[int, int]], traverse: bool, range: int):
+    # Super food consumption strategy based on sight and traverse
+    if range >= 5 and traverse: 
+        snake.eat_super_food = False  
+    elif range < 3 or not traverse:
+        snake.eat_super_food = bool(grid_super_food)
+    elif range in {3, 4} and traverse:
+        snake.eat_super_food = len(grid_super_food) >= 5 # Eat super food immeadiately if enough food have been accumulated
+       
     if grid_food:
+        snake.mode = Mode.EATING  # Prioritize normal food if available
+    elif snake.eat_super_food:
         snake.mode = Mode.EATING
-    elif not traverse or range < 4:
-        snake.eat_super_food = True
-        snake.mode = Mode.EATING if grid_super_food else Mode.EXPLORATION
     else:
-        snake.mode = Mode.EXPLORATION  # Default mode
+        snake.mode = Mode.EXPLORATION  # Default to exploration mode
 
 def export_steps_per_food(file_name: str, steps_per_food: deque[tuple[int, int]]):
     dir = './data'
