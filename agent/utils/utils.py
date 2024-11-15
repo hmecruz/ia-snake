@@ -1,5 +1,7 @@
 from consts import Direction, Tiles
 
+from ..grid import Grid
+
 def determine_direction(
         current_pos: tuple[int, int], next_pos: tuple[int, int], grid_size: tuple[int, int]
         ) -> Direction:
@@ -48,6 +50,7 @@ def convert_sight(sight: dict[str, dict[str, Tiles]]) -> dict[int, dict[int, Til
         for x, y_tile in sight.items()
     }
 
+
 def compute_next_position(pos: tuple[int, int], direction: Direction, grid_size: tuple[int, int], grid_traverse: bool) -> tuple[int, int]:
     "Computes the next poosition based on a given Direction"
     x, y = pos
@@ -75,3 +78,8 @@ def compute_next_position(pos: tuple[int, int], direction: Direction, grid_size:
         )
     
     return (new_x, new_y)
+
+
+def compute_body(next_pos: tuple[int, int], body: list[list[int]]) -> list[list[int]]:
+    new_body = [list(next_pos)] + body[:-1]  # Add new head and remove the last element (tail)
+    return new_body

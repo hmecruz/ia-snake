@@ -6,6 +6,7 @@ class Snake:
     def __init__(self):
         self._pos: tuple[int, int] = None  # Head position
         self._dir: Direction = None
+        self._prev_body: list[list[int]] = None
         self._body: list[list[int]] = None
         self._sight: dict[int, dict[int, Tiles]] = None
         self._range: int = None
@@ -50,6 +51,22 @@ class Snake:
         if not isinstance(new_direction, Direction):
             raise ValueError(f"Invalid direction: Expected a Direction enum value, but received {new_direction}.")
         self._dir = new_direction
+
+    @property
+    def prev_body(self) -> list[list[int]]:
+        return self._prev_body
+
+    @prev_body.setter
+    def prev_body(self, old_body: list[list[int]]):
+        if old_body is None: return 
+        if not (
+            isinstance(old_body, list) and 
+            all(isinstance(part, list) and len(part) == 2 and all(isinstance(coord, int) for coord in part) for part in old_body)
+        ):
+            raise ValueError(
+                f"Invalid prev_body format: Expected a list of [x, y] positions with integer values, but received {old_body}."
+            )
+        self._prev_body = old_body
 
     @property
     def body(self) -> list[list[int]]:
@@ -121,6 +138,7 @@ class Snake:
         
         self.position = pos
         self.direction = dir
+        self.prev_body = self.body
         self.body = body
         self.sight = sight
         self.range = range

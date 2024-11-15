@@ -13,7 +13,6 @@ from agent.grid import Grid
 
 from agent.search.exploration_dijkstra import Exploration
 from agent.search.eating import Eating
-from agent.search.survival import Survival
 
 from agent.utils.utils import determine_direction, convert_sight
 
@@ -32,11 +31,9 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
         grid = Grid(size, grid, 5, 5)
         exploration = Exploration()
         eating = Eating()
-        survival = Survival()
 
         path = deque()
 
-        prev_body = None
         prev_food_positions = None
         prev_super_food_positions = None
 
@@ -54,11 +51,10 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
 
                 # Previous Assignments
                 prev_mode = snake.mode
-                if snake.body: prev_body = snake.body.copy() # Shallow copy, elements inside are tuples (immutable)
                 prev_food_positions = grid.food.copy() # Shallow copy, elements inside are tuples (immutable)
                 prev_super_food_positions = grid.super_food.copy() # Shallow copy, elements inside are tuples (immutable)
 
-                update_snake_grid(state, snake, grid, prev_body)
+                update_snake_grid(state, snake, grid)
                 
                 print(f"Snake Position: {snake.position}")
                 print(f"Snake Direction: {snake.direction._name_}")
@@ -70,6 +66,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                 print(f"Super Foods: {grid.super_food}")
                 print(f"Eat Super Food: {snake.eat_super_food}")
                 #print(f"Snake Body: {snake.body}")
+                #print(f"Snake Body: {snake.prev_body}")
                 print(f"Snake Size: {snake.size}")
 
                 # Path Clearence Conditions --> TODO Make this a function in the future if it gets bigger (it will)
@@ -87,9 +84,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                         path = exploration.get_path(snake, grid, True) # Request a new path to follow
                     elif snake.mode == Mode.EATING:
                         path = eating.get_path(snake, grid) # Request a new path to follow
-                    if not path:
-                        snake.mode = Mode.SURVIVAL
-                        path = survival.get_path(snake, grid)
                     
                 print(f"Path: {path}")
                 
@@ -123,7 +117,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                 raise e
                 
 
-def update_snake_grid(state: dict, snake: Snake, grid: Grid, prev_body: list[list[int]]):
+def update_snake_grid(state: dict, snake: Snake, grid: Grid):
     """Update the snake and grid objects based on the new game state."""
     body = state["body"]
     pos = tuple(body[0])
@@ -137,7 +131,7 @@ def update_snake_grid(state: dict, snake: Snake, grid: Grid, prev_body: list[lis
     
     # Always update snake first
     snake.update(pos, direction, body, sight, range)
-    grid.update(pos, snake.body, prev_body, snake.sight, traverse, step)
+    grid.update(pos, snake.prev_body, snake.body, snake.sight, traverse, step)
     snake_mode(snake, grid.food, grid.super_food, traverse, range)
 
 

@@ -30,11 +30,21 @@ class Grid:
         return f"Grid - Size: {self.size}, Stones: {len(self.stones)}, Food: {len(self.food)}, Super Food: {len(self.super_food)}, Traverse: {self.traverse}"
 
     def __deepcopy__(self, memo):
+        # First, create a new Grid instance with a deep copy of the grid list
         copied = Grid(self._size, copy.deepcopy(self.grid, memo))
+
+        # Deep copy other attributes
         copied._stones = copy.deepcopy(self._stones, memo)
         copied._food = copy.deepcopy(self._food, memo)
         copied._super_food = copy.deepcopy(self._super_food, memo)
-        copied._traverse = self._traverse
+        copied._traverse = self._traverse  # If _traverse doesn't need deep copying, just copy the reference
+
+        # Optionally, you can also copy other dynamic attributes if they exist
+        copied._ate_food = self._ate_food
+        copied._ate_super_food = self._ate_super_food
+        copied._age_update_rate = self._age_update_rate
+        copied._slow_down_effect = self._slow_down_effect
+
         return copied
     
     @property
@@ -138,11 +148,11 @@ class Grid:
         return self.grid[x][y]
     
 
-    def update(self, pos: tuple[int, int], body: list[list[int]], prev_body: list[list[int]], sight: dict[int, dict[int, Tiles]], traverse: bool, step: int):    
+    def update(self, pos: tuple[int, int], prev_body: list[list[int]], body: list[list[int]], sight: dict[int, dict[int, Tiles]], traverse: bool, step: int):    
         self.traverse = traverse
         self._update_visited_tiles(sight, step) 
         eat_food, eat_super_food = self._update_food(pos, sight)
-        self._update_snake_body(pos, body, prev_body, eat_food, eat_super_food)
+        self._update_snake_body(pos, prev_body, body, eat_food, eat_super_food)
 
         
     def _update_food(self, pos: tuple[int, int], sight: dict[int, dict[int, Tiles]]) -> bool:
@@ -169,7 +179,7 @@ class Grid:
         return False, False
 
 
-    def _update_snake_body(self, pos: tuple[int, int], body: list[list[int]], prev_body: list[list[int]], eat_food: bool, eat_super_food: bool):
+    def _update_snake_body(self, pos: tuple[int, int], prev_body: list[list[int]], body: list[list[int]], eat_food: bool, eat_super_food: bool):
         if not prev_body: # Initial setup of the body 
             for segment in body:
                 x, y = segment
