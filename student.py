@@ -28,13 +28,12 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
         grid = state["map"]
         
         snake = Snake()
-        grid = Grid(size, grid, 10)
+        grid = Grid(size, grid, 5, 5)
         exploration = Exploration()
         eating = Eating()
 
         path = deque()
 
-        prev_body = None
         prev_food_positions = None
         prev_super_food_positions = None
 
@@ -52,11 +51,10 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
 
                 # Previous Assignments
                 prev_mode = snake.mode
-                if snake.body: prev_body = snake.body.copy() # Shallow copy elements inside are tuples (immutable)
-                prev_food_positions = grid.food.copy() # Shallow copy elements inside are tuples (immutable)
-                prev_super_food_positions = grid.super_food.copy() # Shallow copy elements inside are tuples (immutable)
+                prev_food_positions = grid.food.copy() # Shallow copy, elements inside are tuples (immutable)
+                prev_super_food_positions = grid.super_food.copy() # Shallow copy, elements inside are tuples (immutable)
 
-                update_snake_grid(state, snake, grid, prev_body)
+                update_snake_grid(state, snake, grid)
                 
                 print(f"Snake Position: {snake.position}")
                 print(f"Snake Direction: {snake.direction._name_}")
@@ -68,6 +66,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                 print(f"Super Foods: {grid.super_food}")
                 print(f"Eat Super Food: {snake.eat_super_food}")
                 #print(f"Snake Body: {snake.body}")
+                #print(f"Snake Body: {snake.prev_body}")
                 print(f"Snake Size: {snake.size}")
 
                 
@@ -83,16 +82,17 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                 # Path Calculation
                 if not path: # List if empty
                     if snake.mode == Mode.EXPLORATION: 
-                        path = deque(exploration.get_path(snake, grid, True)) # Request a new path to follow
+                        path = exploration.get_path(snake, grid, True) # Request a new path to follow
                     elif snake.mode == Mode.EATING:
-                        path = deque(eating.get_path(snake, grid)) # Request a new path to follow
+                        path = eating.get_path(snake, grid) # Request a new path to follow
                     
                 print(f"Path: {path}")
                 
                 if path:
                     direction = determine_direction(snake.position, path.popleft(), grid.size)
                     key = snake.move(direction)
-
+                
+                
                 if file_name and grid.ate_food:
                     (food_counter, current_step - food_step)
                     steps_per_food.append((food_counter, current_step - food_step))
@@ -112,15 +112,13 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                 print("Server has cleanly disconnected us")
                 return
             except Exception as e:
-                print("Entrei")
                 grid.print_grid(snake.position)
                 if file_name:
                     export_steps_per_food(file_name, steps_per_food)
                 raise e
                 
 
-
-def update_snake_grid(state: dict, snake: Snake, grid: Grid, prev_body: list[list[int]]):
+def update_snake_grid(state: dict, snake: Snake, grid: Grid):
     """Update the snake and grid objects based on the new game state."""
     body = state["body"]
     pos = tuple(body[0])
@@ -134,34 +132,40 @@ def update_snake_grid(state: dict, snake: Snake, grid: Grid, prev_body: list[lis
     
     # Always update snake first
     snake.update(pos, direction, body, sight, range)
-    grid.update(pos, snake.body, snake.size, prev_body, snake.sight, traverse, step)
+    grid.update(pos, snake.prev_body, snake.body, snake.sight, traverse, step)
     snake_mode(snake, grid.food, grid.super_food, traverse, range)
 
 
 def snake_mode(snake: Snake, grid_food: set[tuple[int, int]], grid_super_food: set[tuple[int, int]], traverse: bool, range: int):
+    # Super food consumption strategy based on sight and traverse
+    if range >= 5 and traverse: 
+        snake.eat_super_food = False  
+    elif range < 3 or not traverse:
+        snake.eat_super_food = bool(grid_super_food)
+    elif range in {3, 4} and traverse:
+        snake.eat_super_food = len(grid_super_food) >= 5 # Eat super food immeadiately if enough food have been accumulated
+       
     if grid_food:
+        snake.mode = Mode.EATING  # Prioritize normal food if available
+    elif snake.eat_super_food:
         snake.mode = Mode.EATING
-    elif not traverse or range < 4:
-        snake.eat_super_food = True
-        snake.mode = Mode.EATING if grid_super_food else Mode.EXPLORATION
     else:
-        snake.mode = Mode.EXPLORATION  # Default mode
+        snake.mode = Mode.EXPLORATION  # Default to exploration mode
 
 def export_steps_per_food(file_name: str, steps_per_food: deque[tuple[int, int]]):
-    dir = './agent/data'
+    dir = './data'
     os.makedirs(dir, exist_ok=True)
 
-    # Define the full path for the output file
     file_path = os.path.join(dir, file_name)
 
     with open(file_path, 'a') as json_file:
         json.dump(list(steps_per_food), json_file, indent=4)
-        json_file.write("\n")  # Add newline after each entry for clarity
+        json_file.write("\n") 
     
     print(f"Steps data saved to {file_path}")
 
 
-# Uncomment this for the delivery
+# TODO --> Uncomment this for the delivery
 """
 # DO NOT CHANGE THE LINES BELLOW
 # You can change the default values using the command line, example:
@@ -173,7 +177,7 @@ NAME = os.environ.get("NAME", getpass.getuser())
 loop.run_until_complete(agent_loop(f"{SERVER}:{PORT}", NAME))
 """
 
-# Delete this for the delivery
+# TODO --> Comment this for the delivery
 if __name__ == "__main__":
     # Parse command line arguments for file name
     parser = argparse.ArgumentParser(description="Run Snake agent")

@@ -23,7 +23,6 @@ venv/
 #Log files
 log.txt
 
-#Gráfico
-steps_per_food.png
-
+# Graphs and Data files
+agent/data/*.png
 *.json

@@ -20,6 +20,8 @@ class Tiles(IntEnum):
     SUPER = 3
     SNAKE = 4
     VISITED = 5
+    BLOCKED = 6
+    ENEMY = 7
 
 
 class SuperFood(IntEnum):
@@ -48,4 +50,5 @@ class Mode(IntEnum):
     EATING = 1 # Trying to reach food
     ATTACK = 2 # Attack other snakes
     DEFEND = 3 # Defend against other snakes
-    SURVIVE = 4 # Just try to survive by not getting trapped
+    SURVIVAL = 4 # Just try to survive by not getting trapped
+    REGROUP = 5 # Snake regroups if its too spread 

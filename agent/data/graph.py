@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 import os
 
 def create_graph():
-    # Caminho do diretório onde o script está localizado
+    # Path to the directory where the script is located
     script_dir = os.path.dirname(os.path.abspath(__file__))
     
-    # Lista todos os ficheiros JSON no diretório do script
+    # List all JSON files in the script's directory
     json_files = [
         os.path.join(script_dir, f) 
         for f in os.listdir(script_dir) 
@@ -14,7 +14,7 @@ def create_graph():
     ]
 
     if not json_files:
-        print("Nenhum ficheiro JSON encontrado no diretório do script.")
+        print("No JSON files found in the script's directory.")
         return
     
     plt.figure(figsize=(10, 5))
@@ -23,23 +23,24 @@ def create_graph():
         with open(file_path, 'r') as f:
             data = json.load(f)
         
-        # Verificar se os dados estão no formato de deque (lista de pares)
+        # Check if the data is in deque format (list of pairs)
         if isinstance(data, list) and all(isinstance(item, list) and len(item) == 2 for item in data):
-            food, steps = zip(*data)  # Descompactar os pares em duas listas: food e steps
-            food = list(map(int, food))   # Converter valores de 'food' para inteiros
-            plt.plot(food, steps, label=f'Ficheiro {i + 1}')
+            food, steps = zip(*data)  # Unpack the pairs into two lists: food and steps
+            food = list(map(int, food))  # Convert 'food' values to integers
+            plt.plot(food, steps, label=f'File {i + 1}')
         else:
-            print(f"Aviso: {file_path} não contém uma lista de pares. Ignorando este ficheiro.")
+            print(f"Warning: {file_path} does not contain a list of pairs. Skipping this file.")
     
-    plt.title('Passos dados até food')
+    plt.title('Steps Taken per Food')
     plt.xlabel('Food')
     plt.ylabel('Steps')
     plt.legend()
     
-    # Salvar o gráfico como um arquivo de imagem no mesmo diretório do script
+    # Save the graph as an image file in the same directory as the script
     output_path = os.path.join(script_dir, 'steps_per_food.png')
     plt.savefig(output_path)
-    print(f'Gráfico criado com sucesso e salvo como {output_path}.')
+    print(f'Graph successfully created and saved as {output_path}.')
 
 if __name__ == '__main__':
     create_graph()
+    
