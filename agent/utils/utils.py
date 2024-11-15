@@ -47,3 +47,31 @@ def convert_sight(sight: dict[str, dict[str, Tiles]]) -> dict[int, dict[int, Til
         int(x): {int(y): tile for y, tile in y_tile.items()}
         for x, y_tile in sight.items()
     }
+
+def compute_next_position(pos: tuple[int, int], direction: Direction, grid_size: tuple[int, int], grid_traverse: bool) -> tuple[int, int]:
+    "Computes the next poosition based on a given Direction"
+    x, y = pos
+   
+    map_dir_vector = {
+        Direction.NORTH: (0, -1),
+        Direction.SOUTH: (0, 1),
+        Direction.WEST: (-1, 0),
+        Direction.EAST: (1, 0)
+    }
+    dx, dy = map_dir_vector[direction]
+    new_x, new_y = x + dx, y + dy
+
+    grid_width, grid_height = grid_size
+
+    # Apply wrap-around if grid_traverse is enabled
+    if grid_traverse:
+        new_x %= grid_width
+        new_y %= grid_height
+    
+    if not (0 <= new_x < grid_width) or not (0 <= new_y < grid_height):
+        raise ValueError(
+        f"Next position {new_x, new_y} is out of bounds in a grid of size {grid_size}. "
+        f"Current position: {pos}, Direction: {direction._name_}. "
+        )
+    
+    return (new_x, new_y)

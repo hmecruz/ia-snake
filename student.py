@@ -13,6 +13,7 @@ from agent.grid import Grid
 
 from agent.search.exploration_dijkstra import Exploration
 from agent.search.eating import Eating
+from agent.search.survival import Survival
 
 from agent.utils.utils import determine_direction, convert_sight
 
@@ -31,6 +32,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
         grid = Grid(size, grid, 5, 5)
         exploration = Exploration()
         eating = Eating()
+        survival = Survival()
 
         path = deque()
 
@@ -82,16 +84,20 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                 # Path Calculation
                 if not path: # List if empty
                     if snake.mode == Mode.EXPLORATION: 
-                        path = deque(exploration.get_path(snake, grid, True)) # Request a new path to follow
+                        path = exploration.get_path(snake, grid, True) # Request a new path to follow
                     elif snake.mode == Mode.EATING:
-                        path = deque(eating.get_path(snake, grid)) # Request a new path to follow
+                        path = eating.get_path(snake, grid) # Request a new path to follow
+                    if not path:
+                        snake.mode = Mode.SURVIVAL
+                        path = survival.get_path(snake, grid)
                     
                 print(f"Path: {path}")
                 
                 if path:
                     direction = determine_direction(snake.position, path.popleft(), grid.size)
                     key = snake.move(direction)
-
+                
+                
                 if file_name and grid.ate_food:
                     (food_counter, current_step - food_step)
                     steps_per_food.append((food_counter, current_step - food_step))

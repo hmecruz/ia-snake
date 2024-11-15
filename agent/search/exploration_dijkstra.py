@@ -86,7 +86,7 @@ class Exploration:
                     heapq.heappush(open_list, (new_cost, neighbour_pos, neighbour_dir, current_depth + 1))
                     came_from[neighbour_pos] = current_pos
 
-        print("No path to passage found")
+        print("Exploration: No path found")
         return None
     
     

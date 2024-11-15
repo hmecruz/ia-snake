@@ -40,7 +40,7 @@ class Eating:
             if path is not None:
                 return path
         
-        print(f"No valid path found to any goal")
+        print(f"Eating: No path found")
         return None
 
     
