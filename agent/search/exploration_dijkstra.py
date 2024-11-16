@@ -1,3 +1,4 @@
+import copy
 import heapq
 
 from typing import Union, Optional
@@ -7,6 +8,8 @@ from consts import Tiles, Direction
 
 from ..snake import Snake
 from ..grid import Grid
+
+from ..utils.utils import compute_body
 
 class Exploration:
     def __init__(
@@ -40,11 +43,13 @@ class Exploration:
                 - The path will contain grid positions leading to the best `Tiles.VISITED` tile.
         """
         
+        grid_copy = copy.deepcopy(grid)
+
         # Super Food Cost
         self.tile_costs[Tiles.SUPER] = 0 if snake.eat_super_food else 15
         
         open_list = []
-        heapq.heappush(open_list, (0, snake.position, snake.direction, 0)) # Queue holds (cost, position, direction, depth)
+        heapq.heappush(open_list, (0, snake.position, snake.direction, snake.prev_body, snake.body, 0)) # Queue holds (cost, position, direction, prev_body, body, depth)
         visited = set([snake.position])  # Visited positions
         
         came_from = {}  # Tracks the path
@@ -54,7 +59,7 @@ class Exploration:
         first_goal_depth = 0  # Tracks the depth of the first goal found
         
         while open_list:
-            current_cost, current_pos, current_dir, current_depth = heapq.heappop(open_list)
+            current_cost, current_pos, current_dir, previous_body, current_body, current_depth = heapq.heappop(open_list)
             
             # Early exit if we exceed depth limit in depth mode
             if goals and depth and current_depth > first_goal_depth:
@@ -72,6 +77,9 @@ class Exploration:
                 else:
                     return self.reconstruct_path(came_from, current_pos)
 
+            # Update grid
+            grid_copy._update_snake_body(current_pos, previous_body, current_body, False, False)
+
             # Explore neighbours
             neighbours = grid.get_neighbours(self.actions, current_pos, current_dir)
 
@@ -83,7 +91,7 @@ class Exploration:
                 if neighbour_pos not in visited or new_cost < costs.get(neighbour_pos, float('inf')): # If cheaper path
                     visited.add(neighbour_pos)
                     costs[neighbour_pos] = new_cost
-                    heapq.heappush(open_list, (new_cost, neighbour_pos, neighbour_dir, current_depth + 1))
+                    heapq.heappush(open_list, (new_cost, neighbour_pos, neighbour_dir, current_body, compute_body(neighbour_pos, current_body), current_depth + 1))
                     came_from[neighbour_pos] = current_pos
 
         print("Exploration: No path found")

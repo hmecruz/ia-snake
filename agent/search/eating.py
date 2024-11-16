@@ -49,6 +49,8 @@ class Eating:
 
     
     def compute_goal_path(self, snake: Snake, grid: Grid, goal: tuple[int, int]) -> Optional[deque[tuple[int, int]]]:
+        """Find the lowest cost path using A* from the snake's current position to the closest reachable food"""
+        
         open_list = []
         heapq.heappush(open_list, (0, snake.position, snake.direction))  # (f_cost, position, direction)
         visited = set() # Visited positions
@@ -158,14 +160,13 @@ class Eating:
 
         target_positions = food_positions | super_food_positions if eat_super_food else food_positions
 
-        # Min-heap to hold the closest food positions along with their distance to cur_pos
-        heap = []
-
-        # Add food positions to the heap
-        for pos in target_positions:
-            distance = self.heuristic(cur_pos, pos, grid_size, grid_traverse)
-            heapq.heappush(heap, (distance, pos))  # Push (distance, position) to the heap
-
+        # Priority heap for goals
+        heap = [
+            (self.heuristic(cur_pos, pos, grid_size, grid_traverse), pos)
+            for pos in target_positions
+        ]
+        heapq.heapify(heap)  
+        
         # Extract the closest 3 goals (if there are that many) from the heap
         closest_goals = []
         for _ in range(min(3, len(heap))):
