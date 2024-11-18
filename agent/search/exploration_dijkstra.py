@@ -1,5 +1,7 @@
+import copy
 import heapq
 
+from typing import Union, Optional
 from collections import deque
 
 from consts import Tiles, Direction
@@ -7,20 +9,24 @@ from consts import Tiles, Direction
 from ..snake import Snake
 from ..grid import Grid
 
-class Exploration():
+from ..utils.utils import compute_body
+
+class Exploration:
     def __init__(
         self, 
-        actions: list[Direction] = [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH], 
-        tile_costs: dict[Tiles, int] | None = None
+        actions: Optional[list[Direction]] = None, 
+        tile_costs: Optional[dict[Tiles, int]] = None
     ):
-        self.actions = actions
-        self.tile_costs = tile_costs if tile_costs is not None else {
+        self.actions = actions or [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH]
+
+        self.tile_costs = tile_costs or {
             Tiles.VISITED: 1,
             Tiles.STONE: 5
         }
         self.default_cost = 1
+        
 
-    def get_path(self, snake: Snake, grid: Grid, depth: bool = False, depth_limit: None | int = 0) -> deque[tuple[int, int]] | None:
+    def get_path(self, snake: Snake, grid: Grid, depth: bool = False, depth_limit: Optional[int] = 0) -> Optional[deque[tuple[int, int]]]: 
         """
         Find the least costing path from the snake's current position to the best goal tile, considering `Tiles.VISITED` tiles with an age of at least 2. Uses a variant of Dijkstra's algorithm to find paths in a grid.
 
@@ -40,9 +46,20 @@ class Exploration():
         
         # Super Food Cost
         self.tile_costs[Tiles.SUPER] = 0 if snake.eat_super_food else 15
-        
+
+        path = self.compute_goal_path(snake, grid, depth, depth_limit)
+        if path is not None:
+            return path
+
+        print(f"Exploration: No path found")
+        return None
+
+
+    def compute_goal_path(self, snake: Snake, grid: Grid, depth: bool, depth_limit: Optional[int]) -> Optional[deque[tuple[int, int]]]:
+        """Compute the goal real path by updating the snake's body for each move"""
+        grid_copy = copy.deepcopy(grid)
         open_list = []
-        heapq.heappush(open_list, (0, snake.position, snake.direction, 0)) # Queue holds (cost, position, direction, depth)
+        heapq.heappush(open_list, (0, snake.position, snake.direction, snake.prev_body, snake.body, 0)) # Queue holds (cost, position, direction, prev_body, body, depth)
         visited = set([snake.position])  # Visited positions
         
         came_from = {}  # Tracks the path
@@ -52,7 +69,7 @@ class Exploration():
         first_goal_depth = 0  # Tracks the depth of the first goal found
         
         while open_list:
-            current_cost, current_pos, current_dir, current_depth = heapq.heappop(open_list)
+            current_cost, current_pos, current_dir, previous_body, current_body, current_depth = heapq.heappop(open_list)
             
             # Early exit if we exceed depth limit in depth mode
             if goals and depth and current_depth > first_goal_depth:
@@ -70,6 +87,9 @@ class Exploration():
                 else:
                     return self.reconstruct_path(came_from, current_pos)
 
+            # Update grid
+            grid_copy._update_snake_body(current_pos, previous_body, current_body, False, False)
+
             # Explore neighbours
             neighbours = grid.get_neighbours(self.actions, current_pos, current_dir)
 
@@ -81,14 +101,13 @@ class Exploration():
                 if neighbour_pos not in visited or new_cost < costs.get(neighbour_pos, float('inf')): # If cheaper path
                     visited.add(neighbour_pos)
                     costs[neighbour_pos] = new_cost
-                    heapq.heappush(open_list, (new_cost, neighbour_pos, neighbour_dir, current_depth + 1))
+                    heapq.heappush(open_list, (new_cost, neighbour_pos, neighbour_dir, current_body, compute_body(neighbour_pos, current_body), current_depth + 1))
                     came_from[neighbour_pos] = current_pos
 
-        print("No path to passage found")
         return None
     
     
-    def is_valid_goal(self, tile_value: Tiles | tuple[Tiles, int]) -> bool:
+    def is_valid_goal(self, tile_value: Union[Tiles, tuple[Tiles, int]]) -> bool:
         """Check if the tile is a valid goal (Tiles.VISITED with age >= 2)."""
         return isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED and tile_value[1] >= 2
     

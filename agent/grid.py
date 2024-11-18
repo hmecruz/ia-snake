@@ -1,12 +1,15 @@
 import math
 import copy 
 
+from typing import Union, Optional
+
 from consts import Tiles, Direction
 
 class Grid:
     def __init__(self, size: tuple[int, int], grid: list[list], age_update_rate: int = 1, slow_down_effect: int = 0):
         self._size = size
         self.grid = grid
+            
         self.initialize_grid()
         self._stones = self._set_stones()
         self._food = self._set_foods()
@@ -17,8 +20,8 @@ class Grid:
         self._ate_super_food = False
 
         self._age_update_rate = age_update_rate
-        self._slow_down_effect = 5 # Allows Tiles within sight to age slower
-        
+        self._slow_down_effect = slow_down_effect # Allows Tiles within sight to age slower
+
 
     def __repr__(self):
         return f"Grid(size={self.size}, stones={len(self.stones)} stones, food={len(self.food)} items, super_food={len(self.super_food)} items)"
@@ -27,11 +30,21 @@ class Grid:
         return f"Grid - Size: {self.size}, Stones: {len(self.stones)}, Food: {len(self.food)}, Super Food: {len(self.super_food)}, Traverse: {self.traverse}"
 
     def __deepcopy__(self, memo):
+        # First, create a new Grid instance with a deep copy of the grid list
         copied = Grid(self._size, copy.deepcopy(self.grid, memo))
+
+        # Deep copy other attributes
         copied._stones = copy.deepcopy(self._stones, memo)
         copied._food = copy.deepcopy(self._food, memo)
         copied._super_food = copy.deepcopy(self._super_food, memo)
-        copied._traverse = self._traverse
+        copied._traverse = self._traverse  # If _traverse doesn't need deep copying, just copy the reference
+
+        # Optionally, you can also copy other dynamic attributes if they exist
+        copied._ate_food = self._ate_food
+        copied._ate_super_food = self._ate_super_food
+        copied._age_update_rate = self._age_update_rate
+        copied._slow_down_effect = self._slow_down_effect
+
         return copied
     
     @property
@@ -105,48 +118,41 @@ class Grid:
     @slow_down_effect.setter
     def slow_down_effect(self, slow_down_effect: int):
         if not isinstance(slow_down_effect, int) or slow_down_effect < 0:
-            raise ValueError(f"Invalid value for age_update_rate: {slow_down_effect}. Expected a non negative integer.")
+            raise ValueError(f"Invalid value for slow_down_effect: {slow_down_effect}. Expected a non negative integer.")
         self._slow_down_effect = slow_down_effect
     
 
     def initialize_grid(self):
         """Initialize the grid by converting all Tiles.PASSAGE to (Tiles.VISITED, age, slow_down_effect)."""
-        for x in range(self.hor_tiles):
-            for y in range(self.ver_tiles):
-                if self.grid[x][y] == Tiles.PASSAGE:
-                    # Convert each passage tile to visited with an initial age of 1 and slow_down_effect of 0
-                    self.grid[x][y] = (Tiles.VISITED, 1, 0)
+        self.grid = [
+        [
+            (Tiles.VISITED, 1, 0) if self.grid[x][y] == Tiles.PASSAGE else self.grid[x][y]
+            for y in range(self.ver_tiles)
+        ]
+        for x in range(self.hor_tiles)
+    ]
         
-    def _set_stones(self) -> set[tuple[int, int]]: 
+    def _set_stones(self) -> set[tuple[int, int]]:
         """Initialize the positions of stones on the grid."""
-        stones = set()
-        for x in range(self.hor_tiles):
-            for y in range(self.ver_tiles):
-                if self.grid[x][y] == Tiles.STONE:
-                    stones.add((x, y)) # Store stone positions
-        return stones
-    
-    def _set_foods(self) -> set[tuple[int, int]]: 
+        return {(x, y) for x in range(self.hor_tiles) for y in range(self.ver_tiles) if self.grid[x][y] == Tiles.STONE}
+
+
+    def _set_foods(self) -> set[tuple[int, int]]:
         """Initialize the positions of foods on the grid."""
-        foods = set()
-        for x in range(self.hor_tiles):
-            for y in range(self.ver_tiles):
-                if self.grid[x][y] == Tiles.FOOD:
-                    foods.add((x, y)) # Store food positions
-        return foods
+        return {(x, y) for x in range(self.hor_tiles) for y in range(self.ver_tiles) if self.grid[x][y] == Tiles.FOOD}
 
 
-    def get_tile(self, pos: tuple[int, int]) -> Tiles | tuple[Tiles, int, int]:
+    def get_tile(self, pos: tuple[int, int]) -> Union[Tiles, tuple[Tiles, int, int]]:
         """Return the tile type or tuple (Tiles.VISITED, age, slow_down_effect) at the given position."""
         x, y = pos
         return self.grid[x][y]
     
 
-    def update(self, pos: tuple[int, int], body: list[list[int]], size: int, prev_body: list[list[int]], sight: dict[int, dict[int, Tiles]], traverse: bool, step: int):    
+    def update(self, pos: tuple[int, int], prev_body: list[list[int]], body: list[list[int]], sight: dict[int, dict[int, Tiles]], traverse: bool, step: int):    
         self.traverse = traverse
         self._update_visited_tiles(sight, step) 
         eat_food, eat_super_food = self._update_food(pos, sight)
-        self._update_snake_body(pos, body, prev_body, eat_food, eat_super_food)
+        self._update_snake_body(pos, prev_body, body, eat_food, eat_super_food)
 
         
     def _update_food(self, pos: tuple[int, int], sight: dict[int, dict[int, Tiles]]) -> bool:
@@ -173,7 +179,7 @@ class Grid:
         return False, False
 
 
-    def _update_snake_body(self, pos: tuple[int, int], body: list[list[int]], prev_body: list[list[int]], eat_food: bool, eat_super_food: bool):
+    def _update_snake_body(self, pos: tuple[int, int], prev_body: list[list[int]], body: list[list[int]], eat_food: bool, eat_super_food: bool):
         if not prev_body: # Initial setup of the body 
             for segment in body:
                 x, y = segment
@@ -251,7 +257,7 @@ class Grid:
         for x, y_tile in sight.items():
             for y, tile in y_tile.items():
                 if tile == Tiles.PASSAGE:
-                    self.grid[x][y] = (Tiles.VISITED, 1, 5)
+                    self.grid[x][y] = (Tiles.VISITED, 1, self.slow_down_effect)
             
       
     def get_zone(self, pos: tuple[int, int], size: int) -> dict[int, dict[int, Tiles]]:
@@ -341,7 +347,7 @@ class Grid:
         return neighbours
 
     
-    def print_grid(self, snake_head: tuple[int, int] | None = None, age: bool = False):
+    def print_grid(self, snake_head: Optional[tuple[int, int]] = None, age: bool = False):
         string_map_tile = {
             Tiles.PASSAGE: " ",
             Tiles.STONE: "X", 
