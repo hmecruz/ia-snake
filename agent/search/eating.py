@@ -50,10 +50,8 @@ class Eating:
 
 
     def compute_goal_path(self, snake: Snake, grid: Grid, goal: tuple[int, int]) -> Optional[deque[tuple[int, int]]]:
-        """Compute the goal real path by updating the snake's body for each move"""
-        grid_copy = copy.deepcopy(grid)
         open_list = []
-        heapq.heappush(open_list, (0, snake.position, snake.direction, snake.prev_body, snake.body))  # (f_cost, position, direction, prev_body, body)
+        heapq.heappush(open_list, (0, snake.position, snake.direction))  # (f_cost, position, direction)
         visited = set() # Visited positions
 
         came_from = {}
@@ -61,7 +59,7 @@ class Eating:
         f_costs = {snake.position: self.heuristic(snake.position, goal, grid.size, grid.traverse)} # g_score + heuristic
 
         while open_list:
-            _, current_pos, current_direction, previous_body, current_body = heapq.heappop(open_list) # Pop node with the lowest f_score from heap
+            _, current_pos, current_direction = heapq.heappop(open_list) # Pop node with the lowest f_score from heap
             
             if current_pos in visited:
                 continue # Position has already been visited
@@ -72,9 +70,6 @@ class Eating:
             
             visited.add(current_pos) # Add current position to visited 
             
-            # Update grid
-            grid_copy._update_snake_body(current_pos, previous_body, current_body, False, False)
-
             # Explore neighbours
             neighbours = grid.get_neighbours(self.actions, current_pos, current_direction)
 
@@ -89,7 +84,7 @@ class Eating:
                     g_costs[neighbour_pos] = tentative_g_cost
                     f_cost = tentative_g_cost + self.heuristic(neighbour_pos, goal, grid.size, grid.traverse)
                     f_costs[neighbour_pos] = f_cost
-                    heapq.heappush(open_list, (f_cost, neighbour_pos, neighbour_dir, current_body, compute_body(neighbour_pos, current_body)))
+                    heapq.heappush(open_list, (f_cost, neighbour_pos, neighbour_dir))
 
         return None # No path to goal found
 

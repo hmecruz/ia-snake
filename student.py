@@ -45,7 +45,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
             try:
                 print("\n--------------------------------------------\n")
                 state = json.loads(await websocket.recv()) 
-                #start_time = time.time()
+                start_time = time.time()
 
                 current_step = state["step"]
 
@@ -102,9 +102,9 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                 print(f"Key: {key}")  
                 grid.print_grid(snake.position)
                 
-                #end_time = time.time()
-                #duration_ms = (end_time - start_time) * 1000
-                #print(f"Processing time: {duration_ms:.2f} ms")
+                end_time = time.time()
+                duration_ms = (end_time - start_time) * 1000
+                print(f"Processing time: {duration_ms:.2f} ms")
                 await websocket.send(json.dumps({"cmd": "key", "key": key}))  
                 
             except websockets.exceptions.ConnectionClosedOK:
