@@ -26,6 +26,7 @@ class Eating:
         }
         self.default_cost = 1
 
+
     def get_path(self, snake: Snake, grid: Grid) -> Optional[deque[tuple[int, int]]]:
         """Find the lowest cost path using A* from the snake's current position to the closest reachable food"""
         
@@ -38,16 +39,16 @@ class Eating:
         elif not goals_queue: 
             raise ValueError(f"No food found in grid.food: {grid.food}.")
             
+    
         for goal in goals_queue:
             path = self.compute_goal_path(snake, grid, goal)
-            if not path: self.compute_goal_real_path(snake, grid, goal)
             if path is not None:
                 return path
-            
+
         print(f"Eating: No path found")
         return None
 
-    
+
     def compute_goal_path(self, snake: Snake, grid: Grid, goal: tuple[int, int]) -> Optional[deque[tuple[int, int]]]:
         open_list = []
         heapq.heappush(open_list, (0, snake.position, snake.direction))  # (f_cost, position, direction)
@@ -68,7 +69,7 @@ class Eating:
                 return self.reconstruct_path(came_from, current_pos)
             
             visited.add(current_pos) # Add current position to visited 
-
+            
             # Explore neighbours
             neighbours = grid.get_neighbours(self.actions, current_pos, current_direction)
 
@@ -86,51 +87,6 @@ class Eating:
                     heapq.heappush(open_list, (f_cost, neighbour_pos, neighbour_dir))
 
         return None # No path to goal found
-    
-
-    def compute_goal_real_path(self, snake: Snake, grid: Grid, goal) -> Optional[deque[tuple[int, int]]]:
-        """Compute the goal real path by updating the snake's body for each move"""
-        grid_copy = copy.deepcopy(grid)
-        open_list = []
-        heapq.heappush(open_list, (0, snake.position, snake.direction, snake.prev_body, snake.body))  # (f_cost, position, direction, prev_body, body)
-        visited = set() # Visited positions
-
-        came_from = {}
-        g_costs = {snake.position: 0} # Stores the cost from start to each position
-        f_costs = {snake.position: self.heuristic(snake.position, goal, grid.size, grid.traverse)} # g_score + heuristic
-
-        while open_list:
-            _, current_pos, current_direction, previous_body, current_body = heapq.heappop(open_list) # Pop node with the lowest f_score from heap
-            
-            if current_pos in visited:
-                continue # Position has already been visited
-                
-            # Check if the current position is a passage tile 
-            if current_pos == goal:
-                return self.reconstruct_path(came_from, current_pos)
-            
-            visited.add(current_pos) # Add current position to visited 
-            
-            # Update grid
-            grid_copy._update_snake_body(current_pos, previous_body, current_body, False, False)
-
-            # Explore neighbours
-            neighbours = grid.get_neighbours(self.actions, current_pos, current_direction)
-
-            for neighbour_pos, neighbour_dir in neighbours:
-                tile_value = grid.get_tile(neighbour_pos)
-                tile_cost = self.get_tile_cost(tile_value)  # Get the correct cost based on the tile type and age
-                tentative_g_cost = g_costs[current_pos] + tile_cost
-                
-                # Update g_score, f_score, and add to open list if it has not been processed or has a better score
-                if neighbour_pos not in g_costs or tentative_g_cost < g_costs[neighbour_pos]:
-                    came_from[neighbour_pos] = current_pos
-                    g_costs[neighbour_pos] = tentative_g_cost
-                    f_cost = tentative_g_cost + self.heuristic(neighbour_pos, goal, grid.size, grid.traverse)
-                    f_costs[neighbour_pos] = f_cost
-                    heapq.heappush(open_list, (f_cost, neighbour_pos, neighbour_dir, current_body, compute_body(neighbour_pos, current_body)))
-
-        return None # No path to goal found
 
 
     def reconstruct_path(self, came_from: dict[tuple[int, int], tuple[int, int]], current: tuple[int, int]) -> deque[tuple[int, int]]:
@@ -141,7 +97,6 @@ class Eating:
             current = came_from[current]
         return path  # Return deque directly
     
-
     def sort_goals(
         self,
         cur_pos: tuple[int, int],
@@ -158,21 +113,19 @@ class Eating:
 
         target_positions = food_positions | super_food_positions if eat_super_food else food_positions
 
-        # Min-heap to hold the closest food positions along with their distance to cur_pos
-        heap = []
-
-        # Add food positions to the heap
-        for pos in target_positions:
-            distance = self.heuristic(cur_pos, pos, grid_size, grid_traverse)
-            heapq.heappush(heap, (distance, pos))  # Push (distance, position) to the heap
-
+        # Priority heap for goals
+        heap = [
+            (self.heuristic(cur_pos, pos, grid_size, grid_traverse), pos)
+            for pos in target_positions
+        ]
+        heapq.heapify(heap)  
+        
         # Extract the closest 3 goals (if there are that many) from the heap
         closest_goals = []
         for _ in range(min(3, len(heap))):
             closest_goals.append(heapq.heappop(heap)[1])  # Pop and collect the positions
 
         return closest_goals
-
 
     def heuristic(self, pos: tuple[int, int], goal: tuple[int, int], grid_size: tuple[int, int], grid_traverse: bool) -> int:
         """Heuristic function that calculates Manhattan distance with wrap-around consideration."""

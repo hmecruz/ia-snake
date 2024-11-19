@@ -6,8 +6,8 @@ class Snake:
     def __init__(self):
         self._pos: tuple[int, int] = None  # Head position
         self._dir: Direction = None
-        self._prev_body: list[list[int]] = None
-        self._body: list[list[int]] = None
+        self._prev_body: list[tuple[int, int]] = None
+        self._body: list[tuple[int, int]] = None
         self._sight: dict[int, dict[int, Tiles]] = None
         self._range: int = None
         self._mode: Mode = None
@@ -53,23 +53,15 @@ class Snake:
         self._dir = new_direction
 
     @property
-    def prev_body(self) -> list[list[int]]:
+    def prev_body(self) -> list[tuple[int, int]]:
         return self._prev_body
 
     @prev_body.setter
-    def prev_body(self, old_body: list[list[int]]):
-        if old_body is None: return 
-        if not (
-            isinstance(old_body, list) and 
-            all(isinstance(part, list) and len(part) == 2 and all(isinstance(coord, int) for coord in part) for part in old_body)
-        ):
-            raise ValueError(
-                f"Invalid prev_body format: Expected a list of [x, y] positions with integer values, but received {old_body}."
-            )
+    def prev_body(self, old_body: list[tuple[int, int]]):
         self._prev_body = old_body
 
     @property
-    def body(self) -> list[list[int]]:
+    def body(self) -> list[tuple[int, int]]:
         return self._body
     
     @body.setter
@@ -79,7 +71,8 @@ class Snake:
             all(isinstance(part, list) and len(part) == 2 and all(isinstance(coord, int) for coord in part) for part in new_body)
         ):
             raise ValueError(f"Invalid body format: Expected a list of [x, y] positions with integer values, but received {new_body}.")
-        self._body = new_body
+        self._body = [tuple(segment) for segment in new_body]
+
 
     @property
     def size(self) -> int:

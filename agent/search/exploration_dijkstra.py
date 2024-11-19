@@ -1,3 +1,4 @@
+import copy
 import heapq
 
 from typing import Union, Optional
@@ -7,6 +8,8 @@ from consts import Tiles, Direction
 
 from ..snake import Snake
 from ..grid import Grid
+
+from ..utils.utils import compute_body
 
 class Exploration:
     def __init__(
@@ -21,6 +24,7 @@ class Exploration:
             Tiles.STONE: 5
         }
         self.default_cost = 1
+        
 
     def get_path(self, snake: Snake, grid: Grid, depth: bool = False, depth_limit: Optional[int] = 0) -> Optional[deque[tuple[int, int]]]: 
         """
@@ -42,7 +46,16 @@ class Exploration:
         
         # Super Food Cost
         self.tile_costs[Tiles.SUPER] = 0 if snake.eat_super_food else 15
-        
+
+        path = self.compute_goal_path(snake, grid, depth, depth_limit)
+        if path is not None:
+            return path
+
+        print(f"Exploration: No path found")
+        return None
+
+
+    def compute_goal_path(self, snake: Snake, grid: Grid, depth: bool, depth_limit: Optional[int]) -> Optional[deque[tuple[int, int]]]:
         open_list = []
         heapq.heappush(open_list, (0, snake.position, snake.direction, 0)) # Queue holds (cost, position, direction, depth)
         visited = set([snake.position])  # Visited positions
@@ -86,7 +99,6 @@ class Exploration:
                     heapq.heappush(open_list, (new_cost, neighbour_pos, neighbour_dir, current_depth + 1))
                     came_from[neighbour_pos] = current_pos
 
-        print("Exploration: No path found")
         return None
     
     
