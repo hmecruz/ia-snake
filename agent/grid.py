@@ -179,7 +179,7 @@ class Grid:
         return False, False
 
 
-    def _update_snake_body(self, pos: tuple[int, int], prev_body: list[list[int]], body: list[list[int]], eat_food: bool, eat_super_food: bool):
+    def _update_snake_body(self, pos: tuple[int, int], prev_body: list[tuple[int, int]], body: list[tuple[int, int]], eat_food: bool, eat_super_food: bool):
         if not prev_body: # Initial setup of the body 
             for segment in body:
                 x, y = segment
@@ -208,7 +208,18 @@ class Grid:
 
         self.ate_food = True if eat_food == True else False
         self.ate_super_food = True if eat_super_food == True else False
-        
+
+
+    def update_snake_body(self, prev_body: set[tuple[int, int]], body: list[tuple[int, int]]):
+        # Clear snake
+        for segment in prev_body:
+            x, y = segment
+            self.grid[x][y] = (Tiles.VISITED, 1, self.slow_down_effect)
+
+        # Mark snake body 
+        for segment in body:
+            x, y = segment
+            self.grid[x][y] = Tiles.SNAKE
 
     def _update_visited_tiles(self, sight: dict[int, dict[int, Tiles]], step: int):    
         """

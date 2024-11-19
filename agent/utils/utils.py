@@ -80,6 +80,6 @@ def compute_next_position(pos: tuple[int, int], direction: Direction, grid_size:
     return (new_x, new_y)
 
 
-def compute_body(next_pos: tuple[int, int], body: list[list[int]]) -> list[list[int]]:
-    new_body = [list(next_pos)] + body[:-1]  # Add new head and remove the last element (tail)
+def compute_body(next_pos: tuple[int, int], body: list[tuple[int, int]]) -> list[tuple[int, int]]:
+    new_body = [next_pos] + body[:-1]  # Add new head and remove the last element (tail)
     return new_body
