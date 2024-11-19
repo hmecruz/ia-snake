@@ -220,6 +220,7 @@ class Grid:
         for segment in body:
             x, y = segment
             self.grid[x][y] = Tiles.SNAKE
+            
 
     def _update_visited_tiles(self, sight: dict[int, dict[int, Tiles]], step: int):    
         """
