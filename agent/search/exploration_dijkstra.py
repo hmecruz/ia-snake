@@ -54,10 +54,7 @@ class Exploration:
         
         # Flood Fill threshold
         if flood_fill:
-            if snake.size >= 80: 
-                self.flood_fill_threshold = snake.size * 1.5 
-            elif snake.size: 
-                self.flood_fill_threshold = snake.size * 2
+            self.flood_fill_threshold = snake.size * (1.3 if snake.size >= 80 else 1.8)
 
         path = self.compute_goal_path(snake, grid, depth, depth_limit)
         if path is not None:
@@ -85,14 +82,14 @@ class Exploration:
             current_cost, current_pos, current_dir, current_body, current_depth = heapq.heappop(open_list)
             
             # Early exit if we exceed depth limit in depth mode
-            if goals and depth and (len(goals) >= 5 or current_depth > first_goal_depth):
+            if goals and depth and (current_depth > first_goal_depth or len(goals) >= 5):
                 if current_depth > depth_limit:
                     best_goal = self.select_best_goal(goals, grid, snake.range)
                     return self.reconstruct_path(came_from, best_goal)
                 
             # Check if we reached a valid goal (Tiles.VISITED with age >= 2)
             tile_value = grid.get_tile(current_pos)
-            if self.is_valid_goal(grid_copy, tile_value, current_pos, prev_body, current_body):
+            if self.is_valid_goal(grid_copy, tile_value, current_pos, current_dir, prev_body, current_body):
                 if depth:
                     if not goals:
                         first_goal_depth = current_depth
@@ -117,14 +114,14 @@ class Exploration:
         return None
     
     
-    def is_valid_goal(self, grid: Grid, tile_value: Union[Tiles, tuple[Tiles, int]], current_pos: tuple[int, int], prev_body: set[tuple[int, int]], current_body: list[tuple[int, int]]) -> bool:
+    def is_valid_goal(self, grid: Grid, tile_value: Union[Tiles, tuple[Tiles, int]], current_pos: tuple[int, int], current_dir: Direction, prev_body: set[tuple[int, int]], current_body: list[tuple[int, int]]) -> bool:
         """Check if the tile is a valid goal (Tiles.VISITED with age >= 2)."""
         """Check if the goal when using flood fill suprasses X amount of available cells to visit --> Avoids Box in situations"""
         if isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED and tile_value[1] >= 2:
             grid.update_snake_body(prev_body, current_body) # Update grid with new body
             prev_body.clear()               # Clear the old body
             prev_body.update(current_body)  # Add the new body
-            reachable_cells = self.safety.flood_fill(grid, current_pos, self.flood_fill_threshold)
+            reachable_cells = self.safety.flood_fill(grid, current_pos, current_dir, self.flood_fill_threshold)
             return reachable_cells >= self.flood_fill_threshold
 
     def get_tile_cost(self, tile_value: Tiles | tuple[Tiles, int]) -> int :
