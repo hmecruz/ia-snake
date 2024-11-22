@@ -69,14 +69,15 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                 #print(f"Snake Body: {snake.prev_body}")
                 print(f"Snake Size: {snake.size}")
 
-                # Path Clearence Conditions --> TODO Make this a function in the future if it gets bigger (it will)
+                #Path Clearence Conditions
+                # TODO --> Make this a function in the future if it gets bigger (it will)
                 if prev_mode != snake.mode:
                     path.clear() # Clear path if mode switches
                 elif len(prev_food_positions) != len(grid.food):
-                    path.clear() # Clear path if new food is found. Allows for path recalculation to closer food
+                    path.clear() # Clear path if new food is found. Allows for path recalculation for closer foods
                 elif len(prev_super_food_positions) != len(grid.super_food) and snake.eat_super_food:
-                    path.clear() # Clear path if new super food is found and eat super food is True. Allows for path recalculation to closer super foods
-
+                    path.clear() # Clear path if new super food is found and eat super food is True. Allows for path recalculation for closer super foods
+            
 
                 # Path Calculation
                 if not path: # List if empty
@@ -84,6 +85,9 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                         path = exploration.get_path(snake, grid, True) # Request a new path to follow
                     elif snake.mode == Mode.EATING:
                         path = eating.get_path(snake, grid) # Request a new path to follow
+                        if not path: 
+                            snake.mode = Mode.EXPLORATION # Default mode
+                            path = exploration.get_path(snake, grid, True) # Request a new path to follow
                     
                 print(f"Path: {path}")
                 
@@ -92,19 +96,22 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                     key = snake.move(direction)
                 
                 
+                # Graph to keep the track of average food per step
                 if file_name and grid.ate_food:
                     (food_counter, current_step - food_step)
                     steps_per_food.append((food_counter, current_step - food_step))
                     food_step = current_step
                     food_counter += 1
 
-            
+                # Debug
                 print(f"Key: {key}")  
                 grid.print_grid(snake.position)
                 
+                # Processing time
                 end_time = time.time()
                 duration_ms = (end_time - start_time) * 1000
                 print(f"Processing time: {duration_ms:.2f} ms")
+                
                 await websocket.send(json.dumps({"cmd": "key", "key": key}))  
                 
             except websockets.exceptions.ConnectionClosedOK:

@@ -51,6 +51,7 @@ class Exploration:
         self.tile_costs[Tiles.SUPER] = 0 if snake.eat_super_food else 15
         
         # Flood Fill threshold
+        # TODO --> Normalize and generalize safety parameter
         self.flood_fill_threshold = snake.size * 2 if snake.size * 2 < grid.size[0] * grid.size[1] / 2 else snake.size
 
         path = self.compute_goal_path(snake, grid, depth, depth_limit)

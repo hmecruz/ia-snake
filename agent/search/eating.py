@@ -37,6 +37,7 @@ class Eating:
         self.tile_costs[Tiles.SUPER] = 2 if snake.eat_super_food else 15
 
         # Flood Fill threshold
+        # TODO --> Normalize and Generalize safety parameter
         self.flood_fill_threshold = snake.size * 2 if snake.size * 2 < grid.size[0] * grid.size[1] / 2 else snake.size
 
         goals_queue = self.sort_goals(snake.position, grid.food, grid.super_food, grid.size, grid.traverse, snake.eat_super_food)
