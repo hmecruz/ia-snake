@@ -8,6 +8,7 @@ from consts import Direction, Tiles
 
 from ..snake import Snake
 from ..grid import Grid
+from ..safety import Safety
 
 from ..utils.utils import compute_body
 
@@ -25,6 +26,8 @@ class Eating:
             Tiles.FOOD: 0
         }
         self.default_cost = 1
+        self.safety = Safety()
+        self.flood_fill_threshold = None 
 
 
     def get_path(self, snake: Snake, grid: Grid) -> Optional[deque[tuple[int, int]]]:
@@ -32,6 +35,9 @@ class Eating:
         
         # Super Food Cost
         self.tile_costs[Tiles.SUPER] = 2 if snake.eat_super_food else 15
+
+        # Flood Fill threshold
+        self.flood_fill_threshold = snake.size * 2 if snake.size * 2 < grid.size[0] * grid.size[1] / 2 else snake.size
 
         goals_queue = self.sort_goals(snake.position, grid.food, grid.super_food, grid.size, grid.traverse, snake.eat_super_food)
         if not goals_queue and snake.eat_super_food: 
@@ -50,8 +56,11 @@ class Eating:
 
 
     def compute_goal_path(self, snake: Snake, grid: Grid, goal: tuple[int, int]) -> Optional[deque[tuple[int, int]]]:
+        grid_copy = copy.deepcopy(grid)
+        prev_body = set(snake.body) # Save every snake position represented in the grid
+        
         open_list = []
-        heapq.heappush(open_list, (0, snake.position, snake.direction))  # (f_cost, position, direction)
+        heapq.heappush(open_list, (0, snake.position, snake.direction, snake.body))  # (f_cost, position, direction, body)
         visited = set() # Visited positions
 
         came_from = {}
@@ -59,13 +68,13 @@ class Eating:
         f_costs = {snake.position: self.heuristic(snake.position, goal, grid.size, grid.traverse)} # g_score + heuristic
 
         while open_list:
-            _, current_pos, current_direction = heapq.heappop(open_list) # Pop node with the lowest f_score from heap
+            _, current_pos, current_direction, current_body = heapq.heappop(open_list) # Pop node with the lowest f_score from heap
             
             if current_pos in visited:
                 continue # Position has already been visited
                 
             # Check if the current position is a passage tile 
-            if current_pos == goal:
+            if self.is_valid_goal(grid_copy, current_pos, goal, prev_body, current_body):
                 return self.reconstruct_path(came_from, current_pos)
             
             visited.add(current_pos) # Add current position to visited 
@@ -84,10 +93,18 @@ class Eating:
                     g_costs[neighbour_pos] = tentative_g_cost
                     f_cost = tentative_g_cost + self.heuristic(neighbour_pos, goal, grid.size, grid.traverse)
                     f_costs[neighbour_pos] = f_cost
-                    heapq.heappush(open_list, (f_cost, neighbour_pos, neighbour_dir))
+                    heapq.heappush(open_list, (f_cost, neighbour_pos, neighbour_dir, compute_body(neighbour_pos, current_body)))
 
         return None # No path to goal found
 
+    
+    def is_valid_goal(self, grid: Grid, current_pos: tuple[int, int], goal: tuple[int, int], prev_body: set[tuple[int, int]], current_body: list[tuple[int, int]]) -> bool:
+        if current_pos == goal:
+            grid.update_snake_body(prev_body, current_body) # Update grid with new body
+            prev_body.clear()               # Clear the old body
+            prev_body.update(current_body)  # Add the new body
+            reachable_cells = self.safety.flood_fill(grid, current_pos, self.flood_fill_threshold)
+            return reachable_cells >= self.flood_fill_threshold
 
     def reconstruct_path(self, came_from: dict[tuple[int, int], tuple[int, int]], current: tuple[int, int]) -> deque[tuple[int, int]]:
         """Reconstruct the path from start to target using came_from dictionary."""

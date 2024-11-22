@@ -49,6 +49,8 @@ class Exploration:
         
         # Super Food Cost
         self.tile_costs[Tiles.SUPER] = 0 if snake.eat_super_food else 15
+        
+        # Flood Fill threshold
         self.flood_fill_threshold = snake.size * 2 if snake.size * 2 < grid.size[0] * grid.size[1] / 2 else snake.size
 
         path = self.compute_goal_path(snake, grid, depth, depth_limit)
@@ -109,14 +111,14 @@ class Exploration:
         return None
     
     
-    def is_valid_goal(self, grid: Grid, tile_value: Union[Tiles, tuple[Tiles, int]], start_pos: tuple[int, int], prev_body: set[tuple[int, int]], current_body: list[tuple[int, int]]) -> bool:
+    def is_valid_goal(self, grid: Grid, tile_value: Union[Tiles, tuple[Tiles, int]], current_pos: tuple[int, int], prev_body: set[tuple[int, int]], current_body: list[tuple[int, int]]) -> bool:
         """Check if the tile is a valid goal (Tiles.VISITED with age >= 2)."""
         """Check if the goal when using flood fill suprasses X amount of available cells to visit --> Avoids Box in situations"""
         if isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED and tile_value[1] >= 2:
             grid.update_snake_body(prev_body, current_body) # Update grid with new body
             prev_body.clear()               # Clear the old body
             prev_body.update(current_body)  # Add the new body
-            reachable_cells = self.safety.flood_fill(grid, start_pos, self.flood_fill_threshold)
+            reachable_cells = self.safety.flood_fill(grid, current_pos, self.flood_fill_threshold)
             return reachable_cells >= self.flood_fill_threshold
 
     def get_tile_cost(self, tile_value: Tiles | tuple[Tiles, int]) -> int :
