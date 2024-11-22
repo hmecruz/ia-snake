@@ -8,6 +8,7 @@ from consts import Tiles, Direction
 
 from ..snake import Snake
 from ..grid import Grid
+from ..safety import Safety
 
 from ..utils.utils import compute_body
 
@@ -15,7 +16,7 @@ class Exploration:
     def __init__(
         self, 
         actions: Optional[list[Direction]] = None, 
-        tile_costs: Optional[dict[Tiles, int]] = None
+        tile_costs: Optional[dict[Tiles, int]] = None,
     ):
         self.actions = actions or [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH]
 
@@ -24,8 +25,10 @@ class Exploration:
             Tiles.STONE: 5
         }
         self.default_cost = 1
-        
+        self.safety = Safety()
+        self.flood_fill_threshold = None 
 
+        
     def get_path(self, snake: Snake, grid: Grid, depth: bool = False, depth_limit: Optional[int] = 0) -> Optional[deque[tuple[int, int]]]: 
         """
         Find the least costing path from the snake's current position to the best goal tile, considering `Tiles.VISITED` tiles with an age of at least 2. Uses a variant of Dijkstra's algorithm to find paths in a grid.
@@ -46,6 +49,7 @@ class Exploration:
         
         # Super Food Cost
         self.tile_costs[Tiles.SUPER] = 0 if snake.eat_super_food else 15
+        self.flood_fill_threshold = snake.size * 2 if snake.size * 2 < grid.size[0] * grid.size[1] / 2 else snake.size
 
         path = self.compute_goal_path(snake, grid, depth, depth_limit)
         if path is not None:
@@ -56,8 +60,11 @@ class Exploration:
 
 
     def compute_goal_path(self, snake: Snake, grid: Grid, depth: bool, depth_limit: Optional[int]) -> Optional[deque[tuple[int, int]]]:
+        grid_copy = copy.deepcopy(grid)
+        prev_body = set(snake.body) # Save every snake position represented in the grid
+
         open_list = []
-        heapq.heappush(open_list, (0, snake.position, snake.direction, 0)) # Queue holds (cost, position, direction, depth)
+        heapq.heappush(open_list, (0, snake.position, snake.direction, snake.body, 0)) # Queue holds (cost, position, direction, body, depth)
         visited = set([snake.position])  # Visited positions
         
         came_from = {}  # Tracks the path
@@ -67,7 +74,7 @@ class Exploration:
         first_goal_depth = 0  # Tracks the depth of the first goal found
         
         while open_list:
-            current_cost, current_pos, current_dir, current_depth = heapq.heappop(open_list)
+            current_cost, current_pos, current_dir, current_body, current_depth = heapq.heappop(open_list)
             
             # Early exit if we exceed depth limit in depth mode
             if goals and depth and current_depth > first_goal_depth:
@@ -77,7 +84,7 @@ class Exploration:
                 
             # Check if we reached a valid goal (Tiles.VISITED with age >= 2)
             tile_value = grid.get_tile(current_pos)
-            if self.is_valid_goal(tile_value):
+            if self.is_valid_goal(grid_copy, tile_value, current_pos, prev_body, current_body):
                 if depth:
                     if not goals:
                         first_goal_depth = current_depth
@@ -96,16 +103,22 @@ class Exploration:
                 if neighbour_pos not in visited or new_cost < costs.get(neighbour_pos, float('inf')): # If cheaper path
                     visited.add(neighbour_pos)
                     costs[neighbour_pos] = new_cost
-                    heapq.heappush(open_list, (new_cost, neighbour_pos, neighbour_dir, current_depth + 1))
+                    heapq.heappush(open_list, (new_cost, neighbour_pos, neighbour_dir, compute_body(neighbour_pos, current_body), current_depth + 1))
                     came_from[neighbour_pos] = current_pos
 
         return None
     
     
-    def is_valid_goal(self, tile_value: Union[Tiles, tuple[Tiles, int]]) -> bool:
+    def is_valid_goal(self, grid: Grid, tile_value: Union[Tiles, tuple[Tiles, int]], start_pos: tuple[int, int], prev_body: set[tuple[int, int]], current_body: list[tuple[int, int]]) -> bool:
         """Check if the tile is a valid goal (Tiles.VISITED with age >= 2)."""
-        return isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED and tile_value[1] >= 2
-    
+        """Check if the goal when using flood fill suprasses X amount of available cells to visit --> Avoids Box in situations"""
+        if isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED and tile_value[1] >= 2:
+            grid.update_snake_body(prev_body, current_body) # Update grid with new body
+            prev_body.clear()               # Clear the old body
+            prev_body.update(current_body)  # Add the new body
+            reachable_cells = self.safety.flood_fill(grid, start_pos, self.flood_fill_threshold)
+            return reachable_cells >= self.flood_fill_threshold
+
     def get_tile_cost(self, tile_value: Tiles | tuple[Tiles, int]) -> int :
         """Return the cost associated with a tile."""
         if isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED:
