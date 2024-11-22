@@ -21,8 +21,8 @@ class Eating:
         self.actions = actions or [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH]
 
         self.tile_costs = tile_costs or {
-            Tiles.STONE: 6,
-            Tiles.VISITED: 5,
+            Tiles.STONE: 8,
+            Tiles.VISITED: 6, # minus age --> Tile.VISITED [4, 6] cost range 
             Tiles.FOOD: 0
         }
         self.default_cost = 1
@@ -34,11 +34,11 @@ class Eating:
         """Find the lowest cost path using A* from the snake's current position to the closest reachable food"""
         
         # Super Food Cost
-        self.tile_costs[Tiles.SUPER] = 2 if snake.eat_super_food else 15
+        self.tile_costs[Tiles.SUPER] = 2 if snake.eat_super_food else 25
 
         # Flood Fill threshold
         # TODO --> Normalize and Generalize safety parameter
-        self.flood_fill_threshold = snake.size * 2 if snake.size * 2 < grid.size[0] * grid.size[1] / 2 else snake.size
+        self.flood_fill_threshold = snake.size * 2 if snake.size * 2 < grid.size[0] * grid.size[1] / 4 else snake.size
 
         goals_queue = self.sort_goals(snake.position, grid.food, grid.super_food, grid.size, grid.traverse, snake.eat_super_food)
         if not goals_queue and snake.eat_super_food: 
@@ -172,5 +172,5 @@ class Eating:
     def get_tile_cost(self, tile_value: Union[Tiles, tuple[Tiles, int]]) -> int:
         """Return the cost associated with a tile."""
         if isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED:
-            return self.tile_costs[Tiles.VISITED]  # Use the default cost for VISITED tiles (can adjust based on age if needed)
+            return self.tile_costs[Tiles.VISITED] - max(0, min(2, tile_value[1] / 10))  # Use the default cost for VISITED tiles (can adjust based on age if needed)
         return self.tile_costs.get(tile_value, self.default_cost)

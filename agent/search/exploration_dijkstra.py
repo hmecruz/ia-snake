@@ -50,12 +50,14 @@ class Exploration:
         """
         
         # Super Food Cost
-        self.tile_costs[Tiles.SUPER] = 0 if snake.eat_super_food else 15
+        self.tile_costs[Tiles.SUPER] = 0 if snake.eat_super_food else 25
         
         # Flood Fill threshold
-        # TODO --> Normalize and generalize safety parameter
         if flood_fill:
-            self.flood_fill_threshold = snake.size * 2 if snake.size * 2 < grid.size[0] * grid.size[1] / 2 else snake.size
+            if snake.size >= 80: 
+                self.flood_fill_threshold = snake.size * 1.5 
+            elif snake.size: 
+                self.flood_fill_threshold = snake.size * 2
 
         path = self.compute_goal_path(snake, grid, depth, depth_limit)
         if path is not None:
@@ -83,7 +85,7 @@ class Exploration:
             current_cost, current_pos, current_dir, current_body, current_depth = heapq.heappop(open_list)
             
             # Early exit if we exceed depth limit in depth mode
-            if goals and depth and current_depth > first_goal_depth:
+            if goals and depth and (len(goals) >= 5 or current_depth > first_goal_depth):
                 if current_depth > depth_limit:
                     best_goal = self.select_best_goal(goals, grid, snake.range)
                     return self.reconstruct_path(came_from, best_goal)
