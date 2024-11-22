@@ -26,10 +26,10 @@ class Exploration:
         }
         self.default_cost = 1
         self.safety = Safety()
-        self.flood_fill_threshold = None 
+        self.flood_fill_threshold = 0
 
         
-    def get_path(self, snake: Snake, grid: Grid, depth: bool = False, depth_limit: Optional[int] = 0) -> Optional[deque[tuple[int, int]]]: 
+    def get_path(self, snake: Snake, grid: Grid, depth: bool = False, depth_limit: Optional[int] = 0, flood_fill: bool = True) -> Optional[deque[tuple[int, int]]]: 
         """
         Find the least costing path from the snake's current position to the best goal tile, considering `Tiles.VISITED` tiles with an age of at least 2. Uses a variant of Dijkstra's algorithm to find paths in a grid.
 
@@ -41,7 +41,9 @@ class Exploration:
                 - If `True`, the search collects all reachable valid `Tiles.VISITED` tiles and selects the one with the lowest combined cost (cost of reaching the goal minus the sum of the ages of surrounding `Tiles.VISITED` tiles).
             depth_limit (int | None): 
                 - If `depth` is `True`, this limits how far the search will explore. If not specified (default `None`), it will search until all goals are found within the first goal depth and select the best goal.
-
+            flood_fill (bool):
+                - If 'True' the search will only consider a goal if the agent is able to access at least 'self.flood_fill_threshold' tiles
+                - If 'False' the search will not consider the tiles the agent is able to access after it reaches the chosen goal 
         Returns:
             deque[tuple[int, int]] | None: A deque representing the path to the selected goal tile, or `None` if no path to any valid goal is found.
                 - The path will contain grid positions leading to the best `Tiles.VISITED` tile.
@@ -52,7 +54,8 @@ class Exploration:
         
         # Flood Fill threshold
         # TODO --> Normalize and generalize safety parameter
-        self.flood_fill_threshold = snake.size * 2 if snake.size * 2 < grid.size[0] * grid.size[1] / 2 else snake.size
+        if flood_fill:
+            self.flood_fill_threshold = snake.size * 2 if snake.size * 2 < grid.size[0] * grid.size[1] / 2 else snake.size
 
         path = self.compute_goal_path(snake, grid, depth, depth_limit)
         if path is not None:

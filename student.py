@@ -85,9 +85,9 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                         path = exploration.get_path(snake, grid, True) # Request a new path to follow
                     elif snake.mode == Mode.EATING:
                         path = eating.get_path(snake, grid) # Request a new path to follow
-                        if not path: 
-                            snake.mode = Mode.EXPLORATION # Default mode
-                            path = exploration.get_path(snake, grid, True) # Request a new path to follow
+                    if not path: 
+                        snake.mode = Mode.EXPLORATION # Default mode
+                        path = exploration.get_path(snake, grid, True, flood_fill=False) # Request a new path to follow as last resort
                     
                 print(f"Path: {path}")
                 
@@ -95,7 +95,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                     direction = determine_direction(snake.position, path.popleft(), grid.size)
                     key = snake.move(direction)
                 
-                
+
                 # Graph to keep the track of average food per step
                 if file_name and grid.ate_food:
                     (food_counter, current_step - food_step)
