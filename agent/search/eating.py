@@ -27,7 +27,6 @@ class Eating:
         }
         self.default_cost = 1
         self.safety = Safety()
-        self.flood_fill_threshold = 0
 
 
     def get_path(self, snake: Snake, grid: Grid) -> Optional[deque[tuple[int, int]]]:
@@ -37,7 +36,7 @@ class Eating:
         self.tile_costs[Tiles.SUPER] = 2 if snake.eat_super_food else 25
         
         # Flood Fill threshold
-        self.flood_fill_threshold = snake.size * (1.3 if snake.size >= 80 else 1.8)
+        flood_fill_threshold = snake.size * (1.3 if snake.size >= 80 else 1.8)
 
         goals_queue = self.sort_goals(snake.position, grid.food, grid.super_food, grid.size, grid.traverse, snake.eat_super_food)
         if not goals_queue and snake.eat_super_food: 
@@ -45,9 +44,8 @@ class Eating:
         elif not goals_queue: 
             raise ValueError(f"No food found in grid.food: {grid.food}.")
             
-    
         for goal in goals_queue:
-            path = self.compute_goal_path(snake, grid, goal)
+            path = self.compute_goal_path(snake, grid, goal, flood_fill_threshold)
             if path is not None:
                 return path
 
@@ -55,7 +53,7 @@ class Eating:
         return None
 
 
-    def compute_goal_path(self, snake: Snake, grid: Grid, goal: tuple[int, int]) -> Optional[deque[tuple[int, int]]]:
+    def compute_goal_path(self, snake: Snake, grid: Grid, goal: tuple[int, int], flood_fill_threshold: int) -> Optional[deque[tuple[int, int]]]:
         grid_copy = copy.deepcopy(grid)
         prev_body = set(snake.body) # Save every snake position represented in the grid
         
@@ -74,7 +72,7 @@ class Eating:
                 continue # Position has already been visited
                 
             # Check if the current position is a passage tile 
-            if self.is_valid_goal(grid_copy, current_pos, current_direction, goal, prev_body, current_body):
+            if self.is_valid_goal(grid_copy, current_pos, current_direction, goal, prev_body, current_body, flood_fill_threshold):
                 return self.reconstruct_path(came_from, current_pos)
             
             visited.add(current_pos) # Add current position to visited 
@@ -98,13 +96,22 @@ class Eating:
         return None # No path to goal found
 
     
-    def is_valid_goal(self, grid: Grid, current_pos: tuple[int, int], current_dir: Direction, goal: tuple[int, int], prev_body: set[tuple[int, int]], current_body: list[tuple[int, int]]) -> bool:
+    def is_valid_goal(
+            self, 
+            grid: Grid, 
+            current_pos: tuple[int, int], 
+            current_dir: Direction, 
+            goal: tuple[int, int], 
+            prev_body: set[tuple[int, int]], 
+            current_body: list[tuple[int, int]],
+            flood_fill_threshold: int) -> bool:
+        """Check if the goal when using flood fill suprasses X amount of available cells to visit --> Avoids Box in situations"""
         if current_pos == goal:
             grid.update_snake_body(prev_body, current_body) # Update grid with new body
             prev_body.clear()               # Clear the old body
             prev_body.update(current_body)  # Add the new body
-            reachable_cells = self.safety.flood_fill(grid, current_pos, current_dir, self.flood_fill_threshold)
-            return reachable_cells >= self.flood_fill_threshold
+            reachable_cells = self.safety.flood_fill(grid, current_pos, current_dir, flood_fill_threshold)
+            return reachable_cells >= flood_fill_threshold
 
     def reconstruct_path(self, came_from: dict[tuple[int, int], tuple[int, int]], current: tuple[int, int]) -> deque[tuple[int, int]]:
         """Reconstruct the path from start to target using came_from dictionary."""
