@@ -10,7 +10,7 @@ class Safety:
     def __init__(self, actions: Optional[list[Direction]] = None):
         self.actions = actions or [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH]
 
-    def flood_fill(self, grid: Grid, start_pos: tuple[int, int], current_dir: Direction, threshold: Optional[int] = None) -> int:
+    def flood_fill(self, grid: Grid, start_pos: tuple[int, int], current_dir: Direction, threshold: int) -> int:
         """Perform flood-fill from the `start_pos` to find all reachable cells."""
         visited = set()
         queue = deque([(start_pos, current_dir)])
@@ -26,7 +26,7 @@ class Safety:
             reachable_cells += 1
 
             # Exit early if threshold is exceeded
-            if threshold is not None and reachable_cells >= threshold:
+            if reachable_cells >= threshold:
                 return reachable_cells
 
             # Retrieve neighbors
