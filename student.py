@@ -121,6 +121,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                 grid.print_grid(snake.position)
                 if file_name:
                     export_steps_per_food(file_name, steps_per_food)
+                export_num_foods_eaten(food_counter)
                 raise e
                 
 
@@ -170,6 +171,24 @@ def export_steps_per_food(file_name: str, steps_per_food: deque[tuple[int, int]]
     
     print(f"Steps data saved to {file_path}")
 
+def export_num_foods_eaten(num):
+    try:
+        # Verifica se a entrada é um número inteiro
+        if not isinstance(num, int):
+            raise ValueError("A entrada deve ser um número inteiro.")
+        
+        # Caminho do arquivo
+        file_path = os.path.join("data", "num_foods_eaten.txt")
+        
+        # Garante que a pasta 'data' existe
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        
+        # Abre o arquivo no modo append (adicionar ao final) e escreve o número em uma nova linha
+        with open(file_path, "a") as file:
+            file.write(f"{num}\n")
+        print(f"Número {num} adicionado ao ficheiro '{file_path}'.")
+    except Exception as e:
+        print(f"Erro ao escrever no ficheiro: {e}")
 
 # TODO --> Uncomment this for the delivery
 """
