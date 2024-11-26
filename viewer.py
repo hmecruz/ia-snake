@@ -19,9 +19,7 @@ logger.setLevel(logging.DEBUG)
 
 from viewer.common import Directions, Food, Snake, Stone, ScoreBoard, get_direction
 from viewer.sprites import (
-    Info,
     GameStateSprite,
-    GameInfoSprite,
     SnakeSprite,
     FoodSprite,
     StoneSprite,
@@ -71,8 +69,6 @@ async def main(SCALE):
     stone_sprites = pygame.sprite.Group()
     prev_foods = None
 
-    step_info = Info(text="0")
-
     while True:
         should_quit()
 
@@ -84,7 +80,6 @@ async def main(SCALE):
                 snakes_update = state["snakes"]
                 foods_update = state["food"]
                 foods_update = state["food"]
-                step_info.text = f"Step: {state['step']}"
             elif "highscores" in state:
                 all_sprites.add(
                     ScoreBoardSprite(
@@ -146,8 +141,6 @@ async def main(SCALE):
                 for snake in snakes_update
             }
 
-            all_sprites.add(GameInfoSprite(step_info, WIDTH-len(step_info.text), 0, WIDTH, SCALE))
-
             all_sprites.add(
                 [
                     GameStateSprite(snake, i, WIDTH, HEIGHT, SCALE)
@@ -181,6 +174,21 @@ async def main(SCALE):
 
         # Render Window
         display.fill("white")
+
+        # Vision of the snake
+        for snake in snakes_update:
+            if "sight" in snake:
+                snake_sight = snake["sight"]  # Snake sight
+                for x, y_data in snake_sight.items():
+                    for y in y_data:
+                        # Insure integers
+                        x_int = int(x)
+                        y_int = int(y)
+                        pygame.draw.rect(
+                            display,
+                            (135, 245, 139, 75),  # Color for the vision field
+                            pygame.Rect(x_int * SCALE, y_int * SCALE, SCALE, SCALE)
+                        )
 
         try:
             all_sprites.update()
