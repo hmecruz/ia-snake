@@ -36,7 +36,7 @@ class Eating:
         self.tile_costs[Tiles.SUPER] = 2 if snake.eat_super_food else 25
         
         # Flood Fill threshold
-        flood_fill_threshold = snake.size * (1.3 if snake.size >= 80 else 1.8)
+        flood_fill_threshold = snake.size * (1.3 if snake.size >= 80 else 1.8) # TODO --> configurable
 
         goals_queue = self.sort_goals(snake.position, grid.food, grid.super_food, grid.size, grid.traverse, snake.eat_super_food)
         if not goals_queue and snake.eat_super_food: 
