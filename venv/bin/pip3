@@ -1,4 +1,4 @@
-#!/home/diogo/Desktop/IA/tpg-103442_102954/venv/bin/python3
+#!/Users/dgomes/Projects/ia-snakes/venv/bin/python3.12
 # -*- coding: utf-8 -*-
 import re
 import sys

@@ -53,9 +53,9 @@ class Exploration:
         
         # Flood Fill threshold
         if flood_fill:
-            flood_fill_threshold = snake.size * (1.3 if snake.size >= 80 else 1.8) # TODO --> configurable
+            flood_fill_threshold = snake.size * (1.3 if snake.size >= 80 else 1.8)
         else:
-            flood_fill_threshold = None # TODO --> configurable
+            flood_fill_threshold = None
         print(f"Flood Fill Threshold: {flood_fill_threshold}")
 
         path = self.compute_goal_path(snake, grid, depth, flood_fill_threshold)
