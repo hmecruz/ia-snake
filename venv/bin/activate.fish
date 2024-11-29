@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV "/Users/dgomes/Projects/ia-snakes/venv"
+set -gx VIRTUAL_ENV "/home/diogo/Desktop/IA/tpg-103442_102954/venv"
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/bin" $PATH
