@@ -1,6 +1,12 @@
+import time
 from consts import Direction, Tiles
 
-from ..grid import Grid
+def set_start_time():
+    global start_time
+    start_time = time.time()
+
+def get_start_time():
+    return start_time
 
 def determine_direction(
         current_pos: tuple[int, int], next_pos: tuple[int, int], grid_size: tuple[int, int]

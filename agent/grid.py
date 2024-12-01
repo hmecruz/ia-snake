@@ -19,7 +19,7 @@ class Grid:
         self._ate_food = False
         self._ate_super_food = False
 
-        self._age_update_rate = age_update_rate
+        self._age_update_rate = age_update_rate # Allows Tiles to age every <age_update_rate> steps
         self._slow_down_effect = slow_down_effect # Allows Tiles within sight to age slower
 
 

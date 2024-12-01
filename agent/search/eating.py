@@ -1,3 +1,4 @@
+import time
 import copy
 import heapq
 
@@ -10,8 +11,7 @@ from ..snake import Snake
 from ..grid import Grid
 from ..safety import Safety
 
-from ..utils.utils import compute_body
-
+from ..utils.utils import compute_body, get_start_time
 class Eating:
     def __init__(
         self, 
@@ -36,7 +36,7 @@ class Eating:
         self.tile_costs[Tiles.SUPER] = 2 if snake.eat_super_food else 25
         
         # Flood Fill threshold
-        flood_fill_threshold = snake.size * (1.3 if snake.size >= 80 else 1.8)
+        flood_fill_threshold = snake.size * (1.4 if snake.size >= 80 else 1.8)
 
         goals_queue = self.sort_goals(snake.position, grid.food, grid.super_food, grid.size, grid.traverse, snake.eat_super_food)
         if not goals_queue and snake.eat_super_food: 
@@ -66,7 +66,11 @@ class Eating:
         f_costs = {snake.position: self.heuristic(snake.position, goal, grid.size, grid.traverse)} # g_score + heuristic
 
         while open_list:
-            _, current_pos, current_direction, current_body = heapq.heappop(open_list) # Pop node with the lowest f_score from heap
+            if (time.time() - get_start_time()) * 1000 > 85: 
+                print("Exit due to computational time")
+                break # Exit cycle if the computation time exceeds 85ms 
+
+            current_cost, current_pos, current_direction, current_body = heapq.heappop(open_list) # Pop node with the lowest f_score from heap
             
             if current_pos in visited:
                 continue # Position has already been visited
@@ -83,13 +87,13 @@ class Eating:
             for neighbour_pos, neighbour_dir in neighbours:
                 tile_value = grid.get_tile(neighbour_pos)
                 tile_cost = self.get_tile_cost(tile_value)  # Get the correct cost based on the tile type and age
-                tentative_g_cost = g_costs[current_pos] + tile_cost
+                new_cost = current_cost + tile_cost
                 
                 # Update g_score, f_score, and add to open list if it has not been processed or has a better score
-                if neighbour_pos not in g_costs or tentative_g_cost < g_costs[neighbour_pos]:
+                if neighbour_pos not in g_costs or new_cost < g_costs.get(neighbour_pos, float('inf')):
                     came_from[neighbour_pos] = current_pos
-                    g_costs[neighbour_pos] = tentative_g_cost
-                    f_cost = tentative_g_cost + self.heuristic(neighbour_pos, goal, grid.size, grid.traverse)
+                    g_costs[neighbour_pos] = new_cost
+                    f_cost = new_cost + self.heuristic(neighbour_pos, goal, grid.size, grid.traverse)
                     f_costs[neighbour_pos] = f_cost
                     heapq.heappush(open_list, (f_cost, neighbour_pos, neighbour_dir, compute_body(neighbour_pos, current_body)))
 

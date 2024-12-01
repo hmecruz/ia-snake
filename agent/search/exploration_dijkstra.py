@@ -1,3 +1,4 @@
+import time
 import copy
 import heapq
 
@@ -10,7 +11,7 @@ from ..snake import Snake
 from ..grid import Grid
 from ..safety import Safety
 
-from ..utils.utils import compute_body
+from ..utils.utils import compute_body, get_start_time
 
 class Exploration:
     def __init__(
@@ -21,14 +22,14 @@ class Exploration:
         self.actions = actions or [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH]
 
         self.tile_costs = tile_costs or {
-            Tiles.VISITED: 1,
-            Tiles.STONE: 5
+            Tiles.VISITED: 5,
+            Tiles.STONE: 8
         }
         self.default_cost = 1
         self.safety = Safety()
 
         
-    def get_path(self, snake: Snake, grid: Grid, depth: bool = False, flood_fill: bool = True) -> Optional[deque[tuple[int, int]]]: 
+    def get_path(self, snake: Snake, grid: Grid, depth: bool = False, goal_age: Optional[int] = 2, flood_fill: bool = True) -> Optional[deque[tuple[int, int]]]: 
         """
         Find the least costing path from the snake's current position to the best goal tile, considering `Tiles.VISITED` tiles with an age of at least 2. Uses a variant of Dijkstra's algorithm to find paths in a grid.
 
@@ -48,12 +49,15 @@ class Exploration:
                 - The path will contain grid positions leading to the best `Tiles.VISITED` tile.
         """
         
+        # Age for a Tile to be considered a goal
+        self.goal_age = goal_age
+
         # Super Food Cost
         self.tile_costs[Tiles.SUPER] = 0 if snake.eat_super_food else 25
         
         # Flood Fill threshold
         if flood_fill:
-            flood_fill_threshold = snake.size * (1.3 if snake.size >= 80 else 1.8)
+            flood_fill_threshold = snake.size * (1.4 if snake.size >= 80 else 1.8)
         else:
             flood_fill_threshold = None
         print(f"Flood Fill Threshold: {flood_fill_threshold}")
@@ -81,6 +85,10 @@ class Exploration:
         first_goal_depth = 0  # Tracks the depth of the first goal found
         
         while open_list:
+            if flood_fill_threshold and (time.time() - get_start_time()) * 1000 > 85: 
+                print("Exit due to computational time")
+                break # Exit cycle if the computation time exceeds 85ms  
+            
             current_cost, current_pos, current_dir, current_body, current_depth = heapq.heappop(open_list)
             
             # Early exit if the current node depth exceeds the first goal depth
@@ -130,7 +138,7 @@ class Exploration:
             flood_fill_threshold: Optional[int]) -> bool:
         """Check if the tile is a valid goal (Tiles.VISITED with age >= 2)."""
         """Check if the goal when using flood fill suprasses X amount of available cells to visit --> Avoids Box in situations"""
-        if isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED and tile_value[1] >= 2:
+        if isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED and tile_value[1] >= self.goal_age:
             if flood_fill_threshold is None: return True
             grid.update_snake_body(prev_body, current_body) # Update grid with new body
             prev_body.clear()               # Clear the old body
@@ -139,11 +147,12 @@ class Exploration:
             return reachable_cells >= flood_fill_threshold
         return False
 
-    def get_tile_cost(self, tile_value: Tiles | tuple[Tiles, int]) -> int :
+    def get_tile_cost(self, tile_value: Union[Tiles, tuple[Tiles, int]]) -> int:
         """Return the cost associated with a tile."""
         if isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED:
-            return self.tile_costs[Tiles.VISITED]
+            return self.tile_costs[Tiles.VISITED] - max(0, min(4, tile_value[1] / 5))  # Use the default cost for VISITED tiles (can adjust based on age if needed)
         return self.tile_costs.get(tile_value, self.default_cost)
+
 
     def select_best_goal(self, goals: set[tuple[int, int]], grid: Grid, size: int) -> tuple[int, int]:
         """Select the goal with the maximum number of Tiles.PASSAGE in zone."""
