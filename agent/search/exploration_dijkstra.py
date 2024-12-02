@@ -52,6 +52,10 @@ class Exploration:
             return path
 
         print(f"Exploration: No path found")
+        # The death circle check
+        path = self.check_two_steps_ahead(snake, grid, depth, flood_fill_threshold=200)
+        if path is not None:
+            return path
         return None
 
 
@@ -98,6 +102,66 @@ class Exploration:
                     costs[neighbour_pos] = new_cost
                     heapq.heappush(open_list, (new_cost, neighbour_pos, neighbour_dir, current_depth + 1))
                     came_from[neighbour_pos] = current_pos
+
+        return None
+    
+    # Modified from compute_goal path
+    def check_two_steps_ahead(self, snake: Snake, grid: Grid, depth: bool, flood_fill_threshold: 200) -> Optional[deque[tuple[int, int]]]:
+        start_time_death_circle_checking = time.time()
+        grid_copy = copy.deepcopy(grid)
+        prev_body = set(snake.body) # Save every snake position represented in the grid
+
+        open_list = []
+        #heapq.heappush(open_list, (0, snake.position, snake.direction, snake.body, 0)) # Queue holds (cost, position, direction, body, depth)
+        visited = set([snake.position])  # Visited positions
+        
+        came_from = {}  # Tracks the path
+        costs = {snake.position: 0}  # Cost to reach each position
+        
+        goals = set() # Goals hold (goal_pos, cost)
+        first_goal_depth = 0  # Tracks the depth of the first goal found
+
+        neighbours = grid.get_neighbours(self.actions, current_pos, current_dir)
+        
+        for i in neighbours:
+            if flood_fill_threshold and (time.time() - get_start_time()) * 1000 > 40: 
+                print("Exit due to computational time")
+                break # Exit cycle if the computation time exceeds 85ms  
+            
+            current_cost, current_pos, current_dir, current_body, current_depth = heapq.heappop(open_list)
+            
+            # Early exit if the current node depth exceeds the first goal depth
+            if goals and depth and (current_depth > first_goal_depth + 1 or len(goals) >= 5):
+                best_goal = self.select_best_goal(goals, grid, snake.range)
+                return self.reconstruct_path(came_from, best_goal)
+                
+            # Goal Test
+            tile_value = grid.get_tile(current_pos)
+            if self.is_valid_goal(grid_copy, tile_value, current_pos, current_dir, prev_body, current_body, flood_fill_threshold):
+                if depth:
+                    if not goals:
+                        first_goal_depth = current_depth
+                    goals.add((current_pos, current_cost))
+                else:
+                    return self.reconstruct_path(came_from, current_pos)
+
+            # Explore neighbours
+            neighbours2 = grid.get_neighbours(self.actions, current_pos, current_dir)
+
+            for neighbour_pos, neighbour_dir in neighbours2:
+                tile_value = grid.get_tile(neighbour_pos)
+                neighbour_cost = self.get_tile_cost(tile_value)
+                new_cost = current_cost + neighbour_cost
+
+                if neighbour_pos not in visited or new_cost < costs.get(neighbour_pos, float('inf')): # If cheaper path
+                    visited.add(neighbour_pos)
+                    costs[neighbour_pos] = new_cost
+                    heapq.heappush(open_list, (new_cost, neighbour_pos, neighbour_dir, compute_body(neighbour_pos, current_body), current_depth + 1))
+                    came_from[neighbour_pos] = current_pos
+
+        if goals and depth:
+            best_goal = self.select_best_goal(goals, grid, snake.range)
+            return self.reconstruct_path(came_from, best_goal)
 
         return None
     
