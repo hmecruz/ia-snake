@@ -29,7 +29,7 @@ class Exploration:
         self.safety = Safety()
 
         
-    def get_path(self, snake: Snake, grid: Grid, depth: bool = False, goal_age: Optional[int] = 2, flood_fill: bool = True) -> Optional[deque[tuple[int, int]]]: 
+    def get_path(self, snake: Snake, grid: Grid, depth: bool = False, goal_age: Optional[int] = 3, flood_fill: bool = True) -> Optional[deque[tuple[int, int]]]: 
         """
         Find the least costing path from the snake's current position to the best goal tile, considering `Tiles.VISITED` tiles with an age of at least 2. Uses a variant of Dijkstra's algorithm to find paths in a grid.
 

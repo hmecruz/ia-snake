@@ -157,7 +157,7 @@ def snake_mode(snake: Snake, grid_food: set[tuple[int, int]], grid_super_food: s
     if range >= 5 and traverse: 
         snake.eat_super_food = False  
     elif range == 3 and traverse or range >= 4:
-        snake.eat_super_food = len(grid_super_food) >= 3 # Eat super food if enough food have been accumulated
+        snake.eat_super_food = len(grid_super_food) >= 4 # Eat super food if enough food have been accumulated
     elif range < 3 or not traverse:
         snake.eat_super_food = bool(grid_super_food)
 
