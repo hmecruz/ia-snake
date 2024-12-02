@@ -19,7 +19,7 @@ class Grid:
         self._ate_food = False
         self._ate_super_food = False
 
-        self._age_update_rate = age_update_rate
+        self._age_update_rate = age_update_rate # Allows Tiles to age every <age_update_rate> steps
         self._slow_down_effect = slow_down_effect # Allows Tiles within sight to age slower
 
 
@@ -190,7 +190,7 @@ class Grid:
             # Clear previous snake from grid 
             for segment in prev_body:
                 x, y = segment
-                self.grid[x][y] = (Tiles.VISITED, 1, self.slow_down_effect) if (x, y) not in self.stones else Tiles.STONE
+                self.grid[x][y] = (Tiles.VISITED, 1, 0) if (x, y) not in self.stones else Tiles.STONE
             # Mark current snake in grid
             for segment in body:
                 x, y = segment
@@ -204,17 +204,18 @@ class Grid:
             prev_tail = prev_body[-1]
             if not self.ate_food:
                 prev_tail_x, prev_tail_y = prev_tail
-                self.grid[prev_tail_x][prev_tail_y] = (Tiles.VISITED, 1, self.slow_down_effect) if (prev_tail_x, prev_tail_y) not in self.stones else Tiles.STONE
+                self.grid[prev_tail_x][prev_tail_y] = (Tiles.VISITED, 1, 0) if (prev_tail_x, prev_tail_y) not in self.stones else Tiles.STONE
 
         self.ate_food = True if eat_food == True else False
         self.ate_super_food = True if eat_super_food == True else False
 
 
     def update_snake_body(self, prev_body: set[tuple[int, int]], body: list[tuple[int, int]]):
+        """Update snake body should only be used for deepcopies of grid"""
         # Clear snake
         for segment in prev_body:
             x, y = segment
-            self.grid[x][y] = (Tiles.VISITED, 1, self.slow_down_effect)
+            self.grid[x][y] = (Tiles.VISITED, 1, 0)
 
         # Mark snake body 
         for segment in body:
