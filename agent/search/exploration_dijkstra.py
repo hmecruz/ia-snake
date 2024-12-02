@@ -104,13 +104,22 @@ class Exploration:
                 
             # Goal Test
             tile_value = grid.get_tile(current_pos)
-            if self.is_valid_goal(grid_copy, tile_value, current_pos, current_dir, prev_body, current_body, flood_fill_threshold):
-                if depth:
-                    if not goals:
-                        first_goal_depth = current_depth
-                    goals.add((current_pos, current_cost))
-                else:
-                    return self.reconstruct_path(came_from, current_pos)
+            if current_depth != 2:
+                if self.is_valid_goal(tile_value):
+                    if depth:
+                        if not goals:
+                            first_goal_depth = current_depth
+                        goals.add((current_pos, current_cost))
+                    else:
+                        return self.reconstruct_path(came_from, current_pos)
+            else:
+                if self.is_valid_goal_without_death_circle(tile_value):
+                    if depth:
+                        if not goals:
+                            first_goal_depth = current_depth
+                        goals.add((current_pos, current_cost))
+                    else:
+                        return self.reconstruct_path(came_from, current_pos)
 
             # Explore neighbours
             neighbours = grid.get_neighbours(self.actions, current_pos, current_dir)
@@ -210,6 +219,26 @@ class Exploration:
             prev_body.update(current_body)  # Add the new body
             reachable_cells = self.safety.flood_fill(grid, current_pos, current_dir, flood_fill_threshold)
             return reachable_cells >= flood_fill_threshold
+        return False
+    
+    def is_valid_goal_without_death_circle(
+            self, 
+            grid: Grid, 
+            tile_value: Union[Tiles, tuple[Tiles, int]], 
+            current_pos: tuple[int, int], 
+            current_dir: Direction, 
+            prev_body: set[tuple[int, int]], 
+            current_body: list[tuple[int, int]], 
+            flood_fill_threshold: Optional[int]) -> bool:
+        """Check if the tile is a valid goal (Tiles.VISITED with age >= 2)."""
+        """Check if the goal when using flood fill suprasses X amount of available cells to visit --> Avoids Box in situations"""
+        if isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED and tile_value[1] >= self.goal_age:
+            if flood_fill_threshold is None: return True
+            grid.update_snake_body(prev_body, current_body) # Update grid with new body
+            prev_body.clear()               # Clear the old body
+            prev_body.update(current_body)  # Add the new body
+            reachable_cells = self.safety.flood_fill(grid, current_pos, current_dir, flood_fill_threshold=200)
+            return reachable_cells >= 200
         return False
 
     def get_tile_cost(self, tile_value: Union[Tiles, tuple[Tiles, int]]) -> int:
