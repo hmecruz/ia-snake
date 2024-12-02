@@ -39,6 +39,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
         food_counter = 1
         food_step = 0
         steps_per_food = deque()
+
+        path_counter = 0
         
         while True:
             try:
@@ -76,7 +78,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                     path.clear() # Clear path if new food is found. Allows for path recalculation for closer foods
                 elif len(prev_super_food_positions) != len(grid.super_food) and snake.eat_super_food:
                     path.clear() # Clear path if new super food is found and eat super food is True. Allows for path recalculation for closer super foods
-            
+                elif path_counter > 10:
+                    path.clear()
 
                 # Path Calculation
                 if not path: # List if empty
@@ -84,10 +87,14 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                         path = exploration.get_path(snake, grid, True) # Request a new path to follow
                     elif snake.mode == Mode.EATING:
                         path = eating.get_path(snake, grid) # Request a new path to follow
+                        if not path:
+                            snake.mode = Mode.EXPLORATION # Default mode
+                            path = exploration.get_path(snake, grid, True) # Request a new path to follow
                     if not path: 
                         snake.mode = Mode.EXPLORATION # Default mode
                         path = exploration.get_path(snake, grid, True, 1, flood_fill=False) # Request a new path to follow as last resort
-                    
+                    path_counter = 0
+
                 print(f"Path: {path}")
                 
                 if path:
@@ -104,6 +111,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
 
                 # Debug
                 print(f"Key: {key}")  
+                path_counter = path_counter + 1
                 grid.print_grid(snake.position)
                 
                 # Processing time
@@ -149,7 +157,7 @@ def snake_mode(snake: Snake, grid_food: set[tuple[int, int]], grid_super_food: s
     if range >= 5 and traverse: 
         snake.eat_super_food = False  
     elif range == 3 and traverse or range >= 4:
-        snake.eat_super_food = len(grid_super_food) >= 5 # Eat super food if enough food have been accumulated
+        snake.eat_super_food = len(grid_super_food) >= 3 # Eat super food if enough food have been accumulated
     elif range < 3 or not traverse:
         snake.eat_super_food = bool(grid_super_food)
 
