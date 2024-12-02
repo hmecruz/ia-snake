@@ -11,6 +11,8 @@ from ..grid import Grid
 
 from ..utils.utils import compute_body
 
+from time import time
+
 class Exploration:
     def __init__(
         self, 
@@ -107,7 +109,6 @@ class Exploration:
     
     # Modified from compute_goal path
     def check_two_steps_ahead(self, snake: Snake, grid: Grid, depth: bool, flood_fill_threshold: 200) -> Optional[deque[tuple[int, int]]]:
-        start_time_death_circle_checking = time.time()
         grid_copy = copy.deepcopy(grid)
         prev_body = set(snake.body) # Save every snake position represented in the grid
 
