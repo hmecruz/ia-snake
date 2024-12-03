@@ -16,25 +16,33 @@ class Eating:
     def __init__(
         self, 
         actions: Optional[list[Direction]] = None, 
-        tile_costs: Optional[dict[Tiles, int]] = None
     ):
         self.actions = actions or [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH]
 
-        self.tile_costs = tile_costs or {
-            Tiles.STONE: 8,
-            Tiles.VISITED: 6, # minus age --> Tile.VISITED [4, 6] cost range 
-            Tiles.FOOD: 0
+        self.goal_tile_costs = {
+            "food": {
+                Tiles.STONE: 1,
+                Tiles.VISITED: 1,
+                Tiles.FOOD: 0,
+            },
+            "super_food": {
+                Tiles.STONE: 10,
+                Tiles.VISITED: 7, # minus age --> Tile.VISITED [1, 7] cost range --> Useful for longer paths
+                Tiles.FOOD: 0,
+                Tiles.SUPER: 0,
+            },
         }
-        self.default_cost = 1
+
+        self.default_cost = 5
         self.safety = Safety()
 
 
     def get_path(self, snake: Snake, grid: Grid) -> Optional[deque[tuple[int, int]]]:
         """Find the lowest cost path using A* from the snake's current position to the closest reachable food"""
-        
-        # Super Food Cost
-        self.tile_costs[Tiles.SUPER] = 2 if snake.eat_super_food else 25
-        
+                
+        # Super food cost
+        self.goal_tile_costs["food"][Tiles.SUPER] = 0 if snake.eat_super_food else 25
+
         # Flood Fill threshold
         flood_fill_threshold = snake.size * (1.4 if snake.size >= 80 else 1.8)
 
@@ -45,7 +53,8 @@ class Eating:
             raise ValueError(f"No food found in grid.food: {grid.food}.")
             
         for goal in goals_queue:
-            path = self.compute_goal_path(snake, grid, goal, flood_fill_threshold)
+            goal_type = "food" if goal in grid.food else "super_food"
+            path = self.compute_goal_path(snake, grid, goal, goal_type, flood_fill_threshold)
             if path is not None:
                 return path
 
@@ -53,7 +62,7 @@ class Eating:
         return None
 
 
-    def compute_goal_path(self, snake: Snake, grid: Grid, goal: tuple[int, int], flood_fill_threshold: int) -> Optional[deque[tuple[int, int]]]:
+    def compute_goal_path(self, snake: Snake, grid: Grid, goal: tuple[int, int], goal_type: str, flood_fill_threshold: int) -> Optional[deque[tuple[int, int]]]:
         grid_copy = copy.deepcopy(grid)
         prev_body = set(snake.body) # Save every snake position represented in the grid
         
@@ -86,7 +95,7 @@ class Eating:
 
             for neighbour_pos, neighbour_dir in neighbours:
                 tile_value = grid.get_tile(neighbour_pos)
-                tile_cost = self.get_tile_cost(tile_value)  # Get the correct cost based on the tile type and age
+                tile_cost = self.get_tile_cost(tile_value, goal_type)  # Get the correct cost based on the tile type and age
                 new_cost = current_cost + tile_cost
                 
                 # Update g_score, f_score, and add to open list if it has not been processed or has a better score
@@ -179,8 +188,14 @@ class Eating:
         # Manhattan distance considering wrap-around
         return shortest_dx + shortest_dy
     
-    def get_tile_cost(self, tile_value: Union[Tiles, tuple[Tiles, int]]) -> int:
+    def get_tile_cost(self, tile_value: Union[Tiles, tuple[Tiles, float, int]], goal_type: str) -> int:
         """Return the cost associated with a tile."""
+        costs = self.goal_tile_costs[goal_type]
+
         if isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED:
-            return self.tile_costs[Tiles.VISITED] - max(0, min(2, tile_value[1] / 10))  # Use the default cost for VISITED tiles (can adjust based on age if needed)
-        return self.tile_costs.get(tile_value, self.default_cost)
+            base_cost = costs[Tiles.VISITED]
+            if goal_type == "super_food":
+                return base_cost - max(0, min(6, tile_value[1] / 20))
+            return base_cost
+
+        return costs.get(tile_value, self.default_cost)

@@ -41,6 +41,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
         steps_per_food = deque()
 
         path_counter = 0
+        path_clear_threshold = 2 # Path clear if path counter is bigger or equal to path_clear_threshold
         
         while True:
             try:
@@ -78,7 +79,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                     path.clear() # Clear path if new food is found. Allows for path recalculation for closer foods
                 elif len(prev_super_food_positions) != len(grid.super_food) and snake.eat_super_food:
                     path.clear() # Clear path if new super food is found and eat super food is True. Allows for path recalculation for closer super foods
-                elif path_counter > 10:
+                elif path_counter >= path_clear_threshold:
                     path.clear()
 
                 # Path Calculation
@@ -92,7 +93,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                             path = exploration.get_path(snake, grid, True) # Request a new path to follow
                     if not path: 
                         snake.mode = Mode.EXPLORATION # Default mode
-                        path = exploration.get_path(snake, grid, True, 1, flood_fill=False) # Request a new path to follow as last resort
+                        path = exploration.get_path(snake, grid, True, 1.1, flood_fill=False) # Request a new path to follow as last resort till death circle is implemented
                     path_counter = 0
 
                 print(f"Path: {path}")
@@ -112,7 +113,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                 # Debug
                 print(f"Key: {key}")  
                 path_counter = path_counter + 1
-                grid.print_grid(snake.position)
+                grid.print_grid(snake.position) 
                 
                 # Processing time
                 end_time = time.time()

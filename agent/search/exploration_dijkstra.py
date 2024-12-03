@@ -22,14 +22,14 @@ class Exploration:
         self.actions = actions or [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH]
 
         self.tile_costs = tile_costs or {
-            Tiles.VISITED: 5,
-            Tiles.STONE: 8
+            Tiles.VISITED: 7,
+            Tiles.STONE: 10
         }
-        self.default_cost = 1
+        self.default_cost = 5
         self.safety = Safety()
 
         
-    def get_path(self, snake: Snake, grid: Grid, depth: bool = False, goal_age: Optional[int] = 3, flood_fill: bool = True) -> Optional[deque[tuple[int, int]]]: 
+    def get_path(self, snake: Snake, grid: Grid, depth: bool = False, goal_age: Optional[int] = 5, flood_fill: bool = True) -> Optional[deque[tuple[int, int]]]: 
         """
         Find the least costing path from the snake's current position to the best goal tile, considering `Tiles.VISITED` tiles with an age of at least 2. Uses a variant of Dijkstra's algorithm to find paths in a grid.
 
@@ -150,7 +150,7 @@ class Exploration:
     def get_tile_cost(self, tile_value: Union[Tiles, tuple[Tiles, int]]) -> int:
         """Return the cost associated with a tile."""
         if isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED:
-            return self.tile_costs[Tiles.VISITED] - max(0, min(4, tile_value[1] / 5))  # Use the default cost for VISITED tiles (can adjust based on age if needed)
+            return self.tile_costs[Tiles.VISITED] - max(0, min(6, tile_value[1] / 20))  # Use the default cost for VISITED tiles (can adjust based on age if needed)
         return self.tile_costs.get(tile_value, self.default_cost)
 
 

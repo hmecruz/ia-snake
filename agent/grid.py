@@ -21,7 +21,7 @@ class Grid:
 
         self._age_update_rate = age_update_rate # Allows Tiles to age every <age_update_rate> steps
         self._slow_down_effect = slow_down_effect # Allows Tiles within sight to age slower
-
+        self._age_growth_rate = 1.12 # age *=  age_growth_rate
 
     def __repr__(self):
         return f"Grid(size={self.size}, stones={len(self.stones)} stones, food={len(self.food)} items, super_food={len(self.super_food)} items)"
@@ -142,7 +142,7 @@ class Grid:
         return {(x, y) for x in range(self.hor_tiles) for y in range(self.ver_tiles) if self.grid[x][y] == Tiles.FOOD}
 
 
-    def get_tile(self, pos: tuple[int, int]) -> Union[Tiles, tuple[Tiles, int, int]]:
+    def get_tile(self, pos: tuple[int, int]) -> Union[Tiles, tuple[Tiles, float, int]]:
         """Return the tile type or tuple (Tiles.VISITED, age, slow_down_effect) at the given position."""
         x, y = pos
         return self.grid[x][y]
@@ -264,7 +264,8 @@ class Grid:
                         if slow_down_effect > 0:
                             self.grid[x][y] = (Tiles.VISITED, age, slow_down_effect - 1)
                         else:
-                            self.grid[x][y] = (Tiles.VISITED, age + 1, 0)
+                            age *= self._age_growth_rate
+                            self.grid[x][y] = (Tiles.VISITED, age, 0)
         
         # Step 2: Mark all PASSAGE tiles within sight as VISITED with age 1 and a fixed slow-down effect
         for x, y_tile in sight.items():
@@ -378,7 +379,7 @@ class Grid:
                 else:
                     tile_value = self.grid[x][y]
                     if isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED:
-                        row.append(f"{tile_value[1]}") if age else row.append(" ")
+                        row.append(f"{int(tile_value[1])}") if age else row.append(" ")
                     else:
                         row.append(string_map_tile.get(tile_value, "?"))
             print(", ".join(row))
