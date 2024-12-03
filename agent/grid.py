@@ -231,18 +231,20 @@ class Grid:
     def _update_enemy_snake_body(self, body: list[list[int]], sight: dict[int, dict[int, Tiles]]):
         """Updates the snake's enemy body on the grid based on snake's sight."""
         
-        # Clean previous enemy body
+        # Clear previous enemy body
         for x, y in self.prev_enemy_body:
             self.grid[x][y] = (Tiles.VISITED, 1, 0) if (x, y) not in self.stones else Tiles.STONE
         
+        self.prev_enemy_body.clear()
+
         # Mark the current enemy body
         for x, y_tile in sight.items():
             for y, tile in y_tile.items():
                 if tile == Tiles.SNAKE and (x, y) not in body:
                     self.grid[x][y] = Tiles.ENEMY
-                    self.enemy_body.add((x, y))
+                    self.prev_enemy_body.add((x, y))
 
-
+        
     def update_snake_body(self, prev_body: set[tuple[int, int]], body: list[tuple[int, int]]):
         """Update snake body should only be used for deepcopies of grid"""
         # Clear snake
