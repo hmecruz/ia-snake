@@ -85,7 +85,7 @@ class Eating:
                 continue # Position has already been visited
                 
             # Check if the current position is a passage tile 
-            if self.is_valid_goal(grid_copy, current_pos, current_direction, goal, prev_body, current_body, flood_fill_threshold):
+            if self.is_valid_goal(grid_copy, current_pos, current_direction, goal, goal_type, prev_body, current_body, flood_fill_threshold):
                 return self.reconstruct_path(came_from, current_pos)
             
             visited.add(current_pos) # Add current position to visited 
@@ -115,6 +115,7 @@ class Eating:
             current_pos: tuple[int, int], 
             current_dir: Direction, 
             goal: tuple[int, int], 
+            goal_type: str,
             prev_body: set[tuple[int, int]], 
             current_body: list[tuple[int, int]],
             flood_fill_threshold: int) -> bool:
@@ -123,7 +124,16 @@ class Eating:
             grid.update_snake_body(prev_body, current_body) # Update grid with new body
             prev_body.clear()               # Clear the old body
             prev_body.update(current_body)  # Add the new body
+
+            previous_traverse = grid.traverse  # Save the current traverse state 
+            if goal_type == "super_food":
+                grid.traverse = False  # Update grid traversal to False since eating a super food can change the traverse state of the grid
+            
             reachable_cells = self.safety.flood_fill(grid, current_pos, current_dir, flood_fill_threshold)
+            
+            if goal_type == "super_food":
+                grid.traverse = previous_traverse  # Restore grid traversal state
+
             return reachable_cells >= flood_fill_threshold
 
     def reconstruct_path(self, came_from: dict[tuple[int, int], tuple[int, int]], current: tuple[int, int]) -> deque[tuple[int, int]]:

@@ -15,6 +15,9 @@ class Grid:
         self._food = self._set_foods()
         self._super_food = set()
         self._traverse = None
+
+        self._prev_enemy_body = set()
+        self._enemy_body = set()
         
         self._ate_food = False
         self._ate_super_food = False
@@ -80,6 +83,14 @@ class Grid:
         if not isinstance(traverse, bool):
             raise ValueError(f"Invalid value for traverse: {traverse}. Expected a boolean.")
         self._traverse = traverse
+
+    @property
+    def prev_enemy_body(self) -> set:
+        return self._prev_enemy_body
+
+    @property
+    def enemy_body(self) -> set:
+        return self._enemy_body
 
     @property
     def ate_food(self) -> bool:
@@ -153,6 +164,7 @@ class Grid:
         self._update_visited_tiles(sight, step) 
         eat_food, eat_super_food = self._update_food(pos, sight)
         self._update_snake_body(pos, prev_body, body, eat_food, eat_super_food)
+        self._update_enemy_snake_body(body, sight)
 
         
     def _update_food(self, pos: tuple[int, int], sight: dict[int, dict[int, Tiles]]) -> bool:
@@ -167,6 +179,11 @@ class Grid:
                 elif tile == Tiles.SUPER:
                     self._super_food.add((x, y)) 
                     self.grid[x][y] = Tiles.SUPER
+                elif tile == Tiles.PASSAGE or tile == Tiles.SNAKE: 
+                    if (x, y) in self._food:
+                        self._food.remove((x, y))
+                    elif (x, y) in self._super_food:
+                        self._super_food.remove((x, y))
         
         # Eat food and super_food
         if pos in self.food:
@@ -180,6 +197,7 @@ class Grid:
 
 
     def _update_snake_body(self, pos: tuple[int, int], prev_body: list[tuple[int, int]], body: list[tuple[int, int]], eat_food: bool, eat_super_food: bool):
+        """Updates the snake's body on the grid based on its current position and previous body."""
         if not prev_body: # Initial setup of the body 
             for segment in body:
                 x, y = segment
@@ -208,6 +226,21 @@ class Grid:
 
         self.ate_food = True if eat_food == True else False
         self.ate_super_food = True if eat_super_food == True else False
+
+    
+    def _update_enemy_snake_body(self, body: list[list[int]], sight: dict[int, dict[int, Tiles]]):
+        """Updates the snake's enemy body on the grid based on snake's sight."""
+        
+        # Clean previous enemy body
+        for x, y in self.prev_enemy_body:
+            self.grid[x][y] = (Tiles.VISITED, 1, 0) if (x, y) not in self.stones else Tiles.STONE
+        
+        # Mark the current enemy body
+        for x, y_tile in sight.items():
+            for y, tile in y_tile.items():
+                if tile == Tiles.SNAKE and (x, y) not in body:
+                    self.grid[x][y] = Tiles.ENEMY
+                    self.enemy_body.add((x, y))
 
 
     def update_snake_body(self, prev_body: set[tuple[int, int]], body: list[tuple[int, int]]):
@@ -301,7 +334,7 @@ class Grid:
             return False
         if tile_type == Tiles.STONE:
             return not self.traverse
-        if tile_type == Tiles.SNAKE:
+        if tile_type == Tiles.SNAKE or tile_type == Tiles.ENEMY:
             return True
         if tile_type in [Tiles.FOOD, Tiles.SUPER]:
             return False
@@ -364,11 +397,12 @@ class Grid:
     def print_grid(self, snake_head: Optional[tuple[int, int]] = None, age: bool = False):
         string_map_tile = {
             Tiles.PASSAGE: " ",
-            Tiles.STONE: "X", 
-            Tiles.FOOD: "F",
-            Tiles.SUPER: "S",
-            Tiles.SNAKE: "B",
-            Tiles.VISITED: "."
+            Tiles.STONE:   "X", 
+            Tiles.FOOD:    "F",
+            Tiles.SUPER:   "S",
+            Tiles.SNAKE:   "B",
+            Tiles.VISITED: ".",
+            Tiles.ENEMY:   "E"
         }
 
         for y in range(self.ver_tiles): 
