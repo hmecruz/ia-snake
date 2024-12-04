@@ -22,7 +22,7 @@ class Grid:
         self._enemies_exist = False # Enemy presence
         
         self._ate_food = False
-        self._ate_super_food = False
+        self._ate_super_food = 0  # Tracks remaining duration of the effect
 
         self._age_update_rate = age_update_rate # Allows Tiles to age every <age_update_rate> steps
         self._slow_down_effect = slow_down_effect # Allows Tiles within sight to age slower
@@ -111,14 +111,14 @@ class Grid:
         self._ate_food = ate_food
 
     @property
-    def ate_super_food(self) -> bool:
+    def ate_super_food(self) -> int:
         return self._ate_super_food
 
     @ate_super_food.setter
-    def ate_super_food(self, ate_super_food: bool):
-        if not isinstance(ate_super_food, bool):
-            raise ValueError(f"Invalid value for ate_super_food: {ate_super_food}. Expected a boolean.")
-        self._ate_super_food = ate_super_food
+    def ate_super_food(self, duration: int):
+        if not isinstance(duration, int) or duration < 0:
+            raise ValueError(f"Invalid value for ate_super_food: {duration}. Expected a non-negative integer.")
+        self._ate_super_food = duration
 
     @property
     def age_update_rate(self) -> int:
@@ -211,7 +211,7 @@ class Grid:
                 self.grid[x][y] = Tiles.SNAKE # Mark each body segment
             return
         
-        if self.ate_super_food:
+        if self.ate_super_food > 0:  # If the super food effect is active
             # Clear previous snake from grid 
             for segment in prev_body:
                 x, y = segment
@@ -220,6 +220,8 @@ class Grid:
             for segment in body:
                 x, y = segment
                 self.grid[x][y] = Tiles.SNAKE # Mark each body segment
+
+            self.ate_super_food -= 1  # Decrease the effect duration
         else:
             # Mark Head
             head_x, head_y = pos
@@ -232,7 +234,7 @@ class Grid:
                 self.grid[prev_tail_x][prev_tail_y] = (Tiles.VISITED, 1, 0) if (prev_tail_x, prev_tail_y) not in self.stones else Tiles.STONE
 
         self.ate_food = True if eat_food == True else False
-        self.ate_super_food = True if eat_super_food == True else False
+        if eat_super_food == True: self.ate_super_food = 3 
 
     
     def _update_enemy_snake_body(self, pos: tuple[int, int], direction: Direction, body: list[list[int]], sight: dict[int, dict[int, Tiles]]):
