@@ -134,7 +134,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
                 return
-            except ValueError:
+            #except ValueError:
                 if path:   
                    path.clear()
             except Exception as e:
@@ -164,7 +164,7 @@ def update_snake_grid(state: dict, snake: Snake, grid: Grid):
 
 def snake_mode(snake: Snake, grid_food: set[tuple[int, int]], grid_super_food: set[tuple[int, int]], traverse: bool, range: int, step: int):
     # Super food consumption strategy based on sight and traverse
-    if step >= 2700:
+    if step >= 2800:
         snake.eat_super_food = bool(grid_super_food)
     elif range >= 5 and traverse: 
         snake.eat_super_food = False  

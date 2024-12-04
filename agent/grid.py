@@ -247,33 +247,43 @@ class Grid:
                     self.prev_enemy_body.add((x, y))
                     enemies_exist = True
 
-        if enemies_exist == False: return
+        if not enemies_exist: return
         
+        map_direction_vector = {
+            Direction.NORTH: (0, -1),
+            Direction.SOUTH: (0, 1),
+            Direction.WEST: (-1, 0),
+            Direction.EAST: (1, 0)
+        }
+
+        enemy_heads = set()
+        for segment in self.prev_enemy_body:
+            for dir, _ in map_direction_vector.items():
+                surronding = compute_next_position(segment, dir, self.size, grid_traverse=True)  
+                tile = self.get_tile(surronding)
+                if tile == Tiles.ENEMY: continue
+                enemy_heads.add(segment)
+
+
+        # Detect enemy heads
+        enemy_heads = set()
+        for segment in self.prev_enemy_body:
+            # Check all neighboring tiles
+            neighbors = [
+                compute_next_position(segment, dir, self.size, grid_traverse=True)
+                for dir, _ in map_direction_vector.items()
+            ]
+
+            # Count the number of neighbors that are enemy body parts
+            enemy_neighbors = sum(1 for neighbor in neighbors if self.get_tile(neighbor) == Tiles.ENEMY)
+
+            # If a segment has fewer than two enemy neighbors, it's likely the head
+            if enemy_neighbors < 2:
+                enemy_heads.add(segment)
+
+        print(f"Enemy head {enemy_heads}")
+
         """
-        danger_enemy_positions = {
-            Direction.NORTH: [(0, -2), (-1, -1), (1, -1), (-1, 1), (1, 1)],  
-            Direction.SOUTH: [(0, 2), (-1, 1), (1, 1), (-1, -1), (1, -1)],    
-            Direction.EAST:  [(2, 0), (1, -1), (1, 1), (-1, -1), (-1, 1)],      
-            Direction.WEST:  [(-2, 0), (-1, -1), (-1, 1), (1, -1), (1, 1)],   
-        }
-        """
-
-        # Enemy position considered as danger --> Front, Right and Left
-        danger_enemy_positions_front = {
-            Direction.NORTH: [(0, -2), (-1, -1), (1, -1)],  
-            Direction.SOUTH: [(0, 2), (-1, 1), (1, 1)],    
-            Direction.EAST:  [(2, 0), (1, -1), (1, 1)],      
-            Direction.WEST:  [(-2, 0), (-1, -1), (-1, 1)],   
-        }
-
-        # Enemy position considered as danger --> Back, Right and Left
-        danger_enemy_positions_back = {
-            Direction.NORTH: [(-1, 1), (1, 1)],  
-            Direction.SOUTH: [(-1, -1), (1, -1)],    
-            Direction.EAST:  [(-1, -1), (-1, 1)],      
-            Direction.WEST:  [(1, -1), (1, 1)],   
-        }
-
         # Calculate the enemy danger positions based on the snake's direction
         offsets_front = danger_enemy_positions_front.get(direction)
         if not offsets_front:
@@ -302,7 +312,7 @@ class Grid:
                 if tile == Tiles.SNAKE or tile == Tiles.ENEMY: continue
                 self.grid[x][y] = Tiles.ENEMY_SUPPOSITION
                 self.prev_enemy_body.add((x, y))
-
+        """
         
     def update_snake_body(self, prev_body: set[tuple[int, int]], body: list[tuple[int, int]]):
         """Update snake body should only be used for deepcopies of grid"""
