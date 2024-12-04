@@ -275,7 +275,7 @@ class Grid:
             enemy_neighbors = sum(1 for neighbor in neighbors if self.get_tile(neighbor) == Tiles.ENEMY)
 
             # If a segment has fewer than two enemy neighbors, it's likely the head
-            if enemy_neighbors < 2:
+            if enemy_neighbors < 3:
                 enemy_heads.add(segment)
 
         # Mark surrounding positions of enemy heads
