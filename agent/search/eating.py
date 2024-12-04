@@ -2,8 +2,8 @@ import time
 import copy
 import heapq
 
-from typing import Optional, Union
 from collections import deque
+from typing import Optional, Union
 
 from consts import Direction, Tiles
 
@@ -12,6 +12,8 @@ from ..grid import Grid
 from ..safety import Safety
 
 from ..utils.utils import compute_body, get_start_time
+
+
 class Eating:
     def __init__(
         self, 
@@ -43,7 +45,7 @@ class Eating:
         """Find the lowest cost path using A* from the snake's current position to the closest reachable food"""
                 
         # Super food cost
-        self.goal_tile_costs["food"][Tiles.SUPER] = 0 if snake.eat_super_food else 25
+        self.goal_tile_costs["food"][Tiles.SUPER] = 0 if snake.eat_super_food else 100
 
         # Flood Fill threshold
         flood_fill_threshold = snake.size * (1.4 if snake.size >= 80 else 1.8)

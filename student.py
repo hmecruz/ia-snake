@@ -13,6 +13,7 @@ from agent.grid import Grid
 
 from agent.search.exploration_dijkstra import Exploration
 from agent.search.eating import Eating
+from agent.search.death_circle import Survival
 
 from agent.utils.utils import determine_direction, convert_sight, set_start_time, get_start_time
 
@@ -28,8 +29,10 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
         
         snake = Snake()
         grid = Grid(size, grid, 5, 5)
+        
         exploration = Exploration()
         eating = Eating()
+        survival = Survival()
 
         path = deque()
 
@@ -96,8 +99,10 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                             snake.mode = Mode.EXPLORATION # Default mode
                             path = exploration.get_path(snake, grid, True) # Request a new path to follow
                     if not path: 
-                        snake.mode = Mode.EXPLORATION # Default mode
-                        path = exploration.get_path(snake, grid, True, 1.1, flood_fill=False) # Request a new path to follow as last resort till death circle is implemented
+                        snake.mode = Mode.SURVIVAL # Fallback mode
+                        path = survival.get_path(snake, grid, 2)
+                        #path = exploration.get_path(snake, grid, True, 1.1, flood_fill=False) # Request a new path to follow as last resort till death circle is implemented
+                        
                     path_counter = 0
 
                 print(f"Path: {path}")

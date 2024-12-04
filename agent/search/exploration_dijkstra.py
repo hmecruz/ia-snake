@@ -54,7 +54,7 @@ class Exploration:
         self.goal_age = goal_age
 
         # Super Food Cost
-        self.tile_costs[Tiles.SUPER] = 0 if snake.eat_super_food else 25
+        self.tile_costs[Tiles.SUPER] = 0 if snake.eat_super_food else 100
         
         # Flood Fill threshold
         if flood_fill:
@@ -86,9 +86,9 @@ class Exploration:
         first_goal_depth = 0  # Tracks the depth of the first goal found
         
         while open_list:
-            if flood_fill_threshold and (time.time() - get_start_time()) * 1000 > 85: 
+            if flood_fill_threshold and (time.time() - get_start_time()) * 1000 > 80: 
                 print("Exit due to computational time")
-                break # Exit cycle if the computation time exceeds 85ms  
+                break # Exit cycle if the computation time exceeds 80ms  
             
             current_cost, current_pos, current_dir, current_body, current_depth = heapq.heappop(open_list)
             
