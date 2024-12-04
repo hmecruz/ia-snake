@@ -3,6 +3,8 @@ import copy
 
 from typing import Union, Optional
 
+from .utils.utils import compute_next_position, compute_position_from_vector
+
 from consts import Tiles, Direction
 
 class Grid:
@@ -15,13 +17,16 @@ class Grid:
         self._food = self._set_foods()
         self._super_food = set()
         self._traverse = None
+
+        self._prev_enemy_body = set()
+        self._enemies_exist = False # Enemy presence
         
         self._ate_food = False
         self._ate_super_food = False
 
         self._age_update_rate = age_update_rate # Allows Tiles to age every <age_update_rate> steps
         self._slow_down_effect = slow_down_effect # Allows Tiles within sight to age slower
-
+        self._age_growth_rate = 1.12 # age *=  age_growth_rate
 
     def __repr__(self):
         return f"Grid(size={self.size}, stones={len(self.stones)} stones, food={len(self.food)} items, super_food={len(self.super_food)} items)"
@@ -80,6 +85,20 @@ class Grid:
         if not isinstance(traverse, bool):
             raise ValueError(f"Invalid value for traverse: {traverse}. Expected a boolean.")
         self._traverse = traverse
+
+    @property
+    def prev_enemy_body(self) -> set:
+        return self._prev_enemy_body
+
+    @property
+    def enemies_exist(self) -> bool:
+        return self._enemies_exist
+
+    @enemies_exist.setter
+    def enemies_exist(self, enemies_exist: bool):
+        if not isinstance(enemies_exist, bool):
+            raise ValueError(f"Invalid value for enemies_exist: {enemies_exist}. Expected a boolean value.")
+        self._enemies_exist = enemies_exist
 
     @property
     def ate_food(self) -> bool:
@@ -142,18 +161,18 @@ class Grid:
         return {(x, y) for x in range(self.hor_tiles) for y in range(self.ver_tiles) if self.grid[x][y] == Tiles.FOOD}
 
 
-    def get_tile(self, pos: tuple[int, int]) -> Union[Tiles, tuple[Tiles, int, int]]:
+    def get_tile(self, pos: tuple[int, int]) -> Union[Tiles, tuple[Tiles, float, int]]:
         """Return the tile type or tuple (Tiles.VISITED, age, slow_down_effect) at the given position."""
         x, y = pos
         return self.grid[x][y]
     
 
-    def update(self, pos: tuple[int, int], prev_body: list[list[int]], body: list[list[int]], sight: dict[int, dict[int, Tiles]], traverse: bool, step: int):    
+    def update(self, snake, traverse: bool, step: int):    
         self.traverse = traverse
-        self._update_visited_tiles(sight, step) 
-        eat_food, eat_super_food = self._update_food(pos, sight)
-        self._update_snake_body(pos, prev_body, body, eat_food, eat_super_food)
-
+        self._update_visited_tiles(snake.sight, step) 
+        eat_food, eat_super_food = self._update_food(snake.position, snake.sight)
+        self._update_enemy_snake_body(snake.position, snake.direction, snake.body, snake.sight)
+        self._update_snake_body(snake.position, snake.prev_body, snake.body, eat_food, eat_super_food)
         
     def _update_food(self, pos: tuple[int, int], sight: dict[int, dict[int, Tiles]]) -> bool:
         """Update the food and super food positions on the grid."""
@@ -167,6 +186,11 @@ class Grid:
                 elif tile == Tiles.SUPER:
                     self._super_food.add((x, y)) 
                     self.grid[x][y] = Tiles.SUPER
+                elif tile in (Tiles.PASSAGE, Tiles.SNAKE): 
+                    if (x, y) in self._food:
+                        self._food.remove((x, y))
+                    elif (x, y) in self._super_food:
+                        self._super_food.remove((x, y))
         
         # Eat food and super_food
         if pos in self.food:
@@ -180,6 +204,7 @@ class Grid:
 
 
     def _update_snake_body(self, pos: tuple[int, int], prev_body: list[tuple[int, int]], body: list[tuple[int, int]], eat_food: bool, eat_super_food: bool):
+        """Updates the snake's body on the grid based on its current position and previous body."""
         if not prev_body: # Initial setup of the body 
             for segment in body:
                 x, y = segment
@@ -209,7 +234,62 @@ class Grid:
         self.ate_food = True if eat_food == True else False
         self.ate_super_food = True if eat_super_food == True else False
 
+    
+    def _update_enemy_snake_body(self, pos: tuple[int, int], direction: Direction, body: list[list[int]], sight: dict[int, dict[int, Tiles]]):
+        """Updates the snake's enemy body on the grid based on snake's sight."""
+        
+        # Clear previous enemy body
+        for x, y in self.prev_enemy_body:
+            self.grid[x][y] = (Tiles.VISITED, 1, 0) if (x, y) not in self.stones else Tiles.STONE
+        
+        self.prev_enemy_body.clear()
 
+        self.enemies_exist = False
+        # Mark the current enemy body
+        for x, y_tile in sight.items():
+            for y, tile in y_tile.items():
+                if tile == Tiles.SNAKE and (x, y) not in body:
+                    self.grid[x][y] = Tiles.ENEMY
+                    self.prev_enemy_body.add((x, y))
+                    self.enemies_exist = True
+
+        if not self.enemies_exist: return
+        
+        map_direction_vector = {
+            Direction.NORTH: (0, -1),
+            Direction.SOUTH: (0, 1),
+            Direction.WEST: (-1, 0),
+            Direction.EAST: (1, 0)
+        }
+
+        # Detect enemy heads
+        enemy_heads = set()
+        for segment in self.prev_enemy_body:
+            # Check all neighboring tiles
+            neighbors = [
+                compute_next_position(segment, dir, self.size, grid_traverse=True)
+                for dir, _ in map_direction_vector.items()
+            ]
+
+            # Count the number of neighbors that are enemy body parts
+            enemy_neighbors = sum(1 for neighbor in neighbors if self.get_tile(neighbor) == Tiles.ENEMY)
+
+            # If a segment has fewer than two enemy neighbors, it's likely the head
+            if enemy_neighbors < 3:
+                enemy_heads.add(segment)
+
+        # Mark surrounding positions of enemy heads
+        for head in enemy_heads:
+            for dir in map_direction_vector.keys():
+                surrounding_pos = compute_next_position(head, dir, self.size, grid_traverse=True)
+                if self.get_tile(surrounding_pos) not in (Tiles.SNAKE, Tiles.ENEMY):
+                    x, y = surrounding_pos
+                    self.grid[x][y] = Tiles.ENEMY_SUPPOSITION
+                    self.prev_enemy_body.add(surrounding_pos)
+
+        print(f"Enemy head {enemy_heads}")
+
+        
     def update_snake_body(self, prev_body: set[tuple[int, int]], body: list[tuple[int, int]]):
         """Update snake body should only be used for deepcopies of grid"""
         # Clear snake
@@ -264,7 +344,8 @@ class Grid:
                         if slow_down_effect > 0:
                             self.grid[x][y] = (Tiles.VISITED, age, slow_down_effect - 1)
                         else:
-                            self.grid[x][y] = (Tiles.VISITED, age + 1, 0)
+                            age *= self._age_growth_rate
+                            self.grid[x][y] = (Tiles.VISITED, age, 0)
         
         # Step 2: Mark all PASSAGE tiles within sight as VISITED with age 1 and a fixed slow-down effect
         for x, y_tile in sight.items():
@@ -300,8 +381,10 @@ class Grid:
             return False
         if tile_type == Tiles.STONE:
             return not self.traverse
-        if tile_type == Tiles.SNAKE:
+        if tile_type == Tiles.SNAKE or tile_type == Tiles.ENEMY:
             return True
+        if tile_type == Tiles.ENEMY_SUPPOSITION:
+            return False
         if tile_type in [Tiles.FOOD, Tiles.SUPER]:
             return False
 
@@ -363,11 +446,13 @@ class Grid:
     def print_grid(self, snake_head: Optional[tuple[int, int]] = None, age: bool = False):
         string_map_tile = {
             Tiles.PASSAGE: " ",
-            Tiles.STONE: "X", 
-            Tiles.FOOD: "F",
-            Tiles.SUPER: "S",
-            Tiles.SNAKE: "B",
-            Tiles.VISITED: "."
+            Tiles.STONE:   "X", 
+            Tiles.FOOD:    "F",
+            Tiles.SUPER:   "S",
+            Tiles.SNAKE:   "B",
+            Tiles.VISITED: ".",
+            Tiles.ENEMY:   "E", 
+            Tiles.ENEMY_SUPPOSITION: "M"
         }
 
         for y in range(self.ver_tiles): 
@@ -378,7 +463,7 @@ class Grid:
                 else:
                     tile_value = self.grid[x][y]
                     if isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED:
-                        row.append(f"{tile_value[1]}") if age else row.append(" ")
+                        row.append(f"{int(tile_value[1])}") if age else row.append(" ")
                     else:
                         row.append(string_map_tile.get(tile_value, "?"))
             print(", ".join(row))

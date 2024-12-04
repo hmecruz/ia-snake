@@ -2,8 +2,8 @@ import time
 import copy
 import heapq
 
-from typing import Optional, Union
 from collections import deque
+from typing import Optional, Union
 
 from consts import Direction, Tiles
 
@@ -12,29 +12,41 @@ from ..grid import Grid
 from ..safety import Safety
 
 from ..utils.utils import compute_body, get_start_time
+
+
 class Eating:
     def __init__(
         self, 
         actions: Optional[list[Direction]] = None, 
-        tile_costs: Optional[dict[Tiles, int]] = None
     ):
         self.actions = actions or [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH]
 
-        self.tile_costs = tile_costs or {
-            Tiles.STONE: 8,
-            Tiles.VISITED: 6, # minus age --> Tile.VISITED [4, 6] cost range 
-            Tiles.FOOD: 0
+        self.goal_tile_costs = {
+            "food": {
+                Tiles.STONE: 1,
+                Tiles.VISITED: 1,
+                Tiles.ENEMY_SUPPOSITION: 500,
+                Tiles.FOOD: 0,
+            },
+            "super_food": {
+                Tiles.STONE: 10,
+                Tiles.VISITED: 7, # minus age --> Tile.VISITED [1, 7] cost range --> Useful for longer paths
+                Tiles.ENEMY_SUPPOSITION: 500,
+                Tiles.FOOD: 0,
+                Tiles.SUPER: 0,
+            },
         }
-        self.default_cost = 1
+
+        self.default_cost = 5
         self.safety = Safety()
 
 
     def get_path(self, snake: Snake, grid: Grid) -> Optional[deque[tuple[int, int]]]:
         """Find the lowest cost path using A* from the snake's current position to the closest reachable food"""
-        
-        # Super Food Cost
-        self.tile_costs[Tiles.SUPER] = 2 if snake.eat_super_food else 25
-        
+                
+        # Super food cost
+        self.goal_tile_costs["food"][Tiles.SUPER] = 0 if snake.eat_super_food else 100
+
         # Flood Fill threshold
         flood_fill_threshold = snake.size * (1.4 if snake.size >= 80 else 1.8)
 
@@ -45,7 +57,10 @@ class Eating:
             raise ValueError(f"No food found in grid.food: {grid.food}.")
             
         for goal in goals_queue:
-            path = self.compute_goal_path(snake, grid, goal, flood_fill_threshold)
+            goal_type = "food" if goal in grid.food else "super_food"
+            if grid.get_tile(goal) == Tiles.ENEMY_SUPPOSITION: # Avoid making a danger move
+                continue
+            path = self.compute_goal_path(snake, grid, goal, goal_type, flood_fill_threshold)
             if path is not None:
                 return path
 
@@ -53,7 +68,7 @@ class Eating:
         return None
 
 
-    def compute_goal_path(self, snake: Snake, grid: Grid, goal: tuple[int, int], flood_fill_threshold: int) -> Optional[deque[tuple[int, int]]]:
+    def compute_goal_path(self, snake: Snake, grid: Grid, goal: tuple[int, int], goal_type: str, flood_fill_threshold: int) -> Optional[deque[tuple[int, int]]]:
         grid_copy = copy.deepcopy(grid)
         prev_body = set(snake.body) # Save every snake position represented in the grid
         
@@ -76,7 +91,7 @@ class Eating:
                 continue # Position has already been visited
                 
             # Check if the current position is a passage tile 
-            if self.is_valid_goal(grid_copy, current_pos, current_direction, goal, prev_body, current_body, flood_fill_threshold):
+            if self.is_valid_goal(grid_copy, current_pos, current_direction, goal, goal_type, prev_body, current_body, flood_fill_threshold):
                 return self.reconstruct_path(came_from, current_pos)
             
             visited.add(current_pos) # Add current position to visited 
@@ -86,7 +101,7 @@ class Eating:
 
             for neighbour_pos, neighbour_dir in neighbours:
                 tile_value = grid.get_tile(neighbour_pos)
-                tile_cost = self.get_tile_cost(tile_value)  # Get the correct cost based on the tile type and age
+                tile_cost = self.get_tile_cost(tile_value, goal_type)  # Get the correct cost based on the tile type and age
                 new_cost = current_cost + tile_cost
                 
                 # Update g_score, f_score, and add to open list if it has not been processed or has a better score
@@ -106,6 +121,7 @@ class Eating:
             current_pos: tuple[int, int], 
             current_dir: Direction, 
             goal: tuple[int, int], 
+            goal_type: str,
             prev_body: set[tuple[int, int]], 
             current_body: list[tuple[int, int]],
             flood_fill_threshold: int) -> bool:
@@ -114,7 +130,16 @@ class Eating:
             grid.update_snake_body(prev_body, current_body) # Update grid with new body
             prev_body.clear()               # Clear the old body
             prev_body.update(current_body)  # Add the new body
+
+            previous_traverse = grid.traverse  # Save the current traverse state 
+            if goal_type == "super_food":
+                grid.traverse = False  # Update grid traversal to False since eating a super food can change the traverse state of the grid
+            
             reachable_cells = self.safety.flood_fill(grid, current_pos, current_dir, flood_fill_threshold)
+            
+            if goal_type == "super_food":
+                grid.traverse = previous_traverse  # Restore grid traversal state
+
             return reachable_cells >= flood_fill_threshold
 
     def reconstruct_path(self, came_from: dict[tuple[int, int], tuple[int, int]], current: tuple[int, int]) -> deque[tuple[int, int]]:
@@ -179,8 +204,14 @@ class Eating:
         # Manhattan distance considering wrap-around
         return shortest_dx + shortest_dy
     
-    def get_tile_cost(self, tile_value: Union[Tiles, tuple[Tiles, int]]) -> int:
+    def get_tile_cost(self, tile_value: Union[Tiles, tuple[Tiles, float, int]], goal_type: str) -> int:
         """Return the cost associated with a tile."""
+        costs = self.goal_tile_costs[goal_type]
+
         if isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED:
-            return self.tile_costs[Tiles.VISITED] - max(0, min(2, tile_value[1] / 10))  # Use the default cost for VISITED tiles (can adjust based on age if needed)
-        return self.tile_costs.get(tile_value, self.default_cost)
+            base_cost = costs[Tiles.VISITED]
+            if goal_type == "super_food":
+                return base_cost - max(0, min(6, tile_value[1] / 20))
+            return base_cost
+
+        return costs.get(tile_value, self.default_cost)

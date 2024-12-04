@@ -13,10 +13,11 @@ from agent.grid import Grid
 
 from agent.search.exploration_dijkstra import Exploration
 from agent.search.eating import Eating
+from agent.search.death_circle import Survival
 
 from agent.utils.utils import determine_direction, convert_sight, set_start_time, get_start_time
 
-from consts import Mode
+from consts import Mode, Tiles
 
 async def agent_loop(server_address="localhost:8000", agent_name="student", file_name=None):
     async with websockets.connect(f"ws://{server_address}/player") as websocket:
@@ -28,8 +29,10 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
         
         snake = Snake()
         grid = Grid(size, grid, 5, 5)
+        
         exploration = Exploration()
         eating = Eating()
+        survival = Survival()
 
         path = deque()
 
@@ -41,6 +44,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
         steps_per_food = deque()
 
         path_counter = 0
+        path_clear_threshold = 2 # Path clear if path counter is bigger or equal to path_clear_threshold
         
         while True:
             try:
@@ -72,14 +76,18 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
 
                 #Path Clearence Conditions
                 # TODO --> Make this a function in the future if it gets bigger (it will)
-                if prev_mode != snake.mode:
-                    path.clear() # Clear path if mode switches
-                elif len(prev_food_positions) != len(grid.food):
-                    path.clear() # Clear path if new food is found. Allows for path recalculation for closer foods
-                elif len(prev_super_food_positions) != len(grid.super_food) and snake.eat_super_food:
-                    path.clear() # Clear path if new super food is found and eat super food is True. Allows for path recalculation for closer super foods
-                elif path_counter > 10:
-                    path.clear()
+                if path:
+                    if prev_mode != snake.mode:
+                        path.clear() # Clear path if mode switches
+                    elif prev_food_positions != grid.food:
+                        path.clear() # Clear path if new food is found. Allows for path recalculation for closer foods
+                    elif prev_super_food_positions != grid.super_food and snake.eat_super_food:
+                        path.clear() # Clear path if new super food is found and eat super food is True. Allows for path recalculation for closer super foods
+                    elif path_counter >= path_clear_threshold:
+                        path.clear()
+                    else:
+                        if grid.enemies_exist: # Enemies are present
+                            path.clear()
 
                 # Path Calculation
                 if not path: # List if empty
@@ -91,8 +99,10 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                             snake.mode = Mode.EXPLORATION # Default mode
                             path = exploration.get_path(snake, grid, True) # Request a new path to follow
                     if not path: 
-                        snake.mode = Mode.EXPLORATION # Default mode
-                        path = exploration.get_path(snake, grid, True, 1, flood_fill=False) # Request a new path to follow as last resort
+                        snake.mode = Mode.SURVIVAL # Fallback mode
+                        path = survival.get_path(snake, grid, 2)
+                        #path = exploration.get_path(snake, grid, True, 1.1, flood_fill=False) # Request a new path to follow as last resort till death circle is implemented
+                        
                     path_counter = 0
 
                 print(f"Path: {path}")
@@ -112,7 +122,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                 # Debug
                 print(f"Key: {key}")  
                 path_counter = path_counter + 1
-                grid.print_grid(snake.position)
+                grid.print_grid(snake.position) 
                 
                 # Processing time
                 end_time = time.time()
@@ -126,7 +136,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                 print("Server has cleanly disconnected us")
                 return
             except ValueError:
-                path.clear()
+                if path:   
+                   path.clear()
             except Exception as e:
                 grid.print_grid(snake.position)
                 if file_name:
@@ -148,13 +159,15 @@ def update_snake_grid(state: dict, snake: Snake, grid: Grid):
     
     # Always update snake first
     snake.update(pos, direction, body, sight, range)
-    grid.update(pos, snake.prev_body, snake.body, snake.sight, traverse, step)
-    snake_mode(snake, grid.food, grid.super_food, traverse, range)
+    grid.update(snake, traverse, step)
+    snake_mode(snake, grid.food, grid.super_food, traverse, range, step)
 
 
-def snake_mode(snake: Snake, grid_food: set[tuple[int, int]], grid_super_food: set[tuple[int, int]], traverse: bool, range: int):
+def snake_mode(snake: Snake, grid_food: set[tuple[int, int]], grid_super_food: set[tuple[int, int]], traverse: bool, range: int, step: int):
     # Super food consumption strategy based on sight and traverse
-    if range >= 5 and traverse: 
+    if step >= 2800:
+        snake.eat_super_food = bool(grid_super_food)
+    elif range >= 5 and traverse: 
         snake.eat_super_food = False  
     elif range == 3 and traverse or range >= 4:
         snake.eat_super_food = len(grid_super_food) >= 4 # Eat super food if enough food have been accumulated

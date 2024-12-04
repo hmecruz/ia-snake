@@ -24,14 +24,15 @@ class Exploration:
         self.actions = actions or [Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH]
 
         self.tile_costs = tile_costs or {
-            Tiles.VISITED: 5,
-            Tiles.STONE: 8
+            Tiles.VISITED: 7,
+            Tiles.STONE: 10,
+            Tiles.ENEMY_SUPPOSITION: 500,
         }
-        self.default_cost = 1
+        self.default_cost = 5
         self.safety = Safety()
 
         
-    def get_path(self, snake: Snake, grid: Grid, depth: bool = False, goal_age: Optional[int] = 3, flood_fill: bool = True) -> Optional[deque[tuple[int, int]]]: 
+    def get_path(self, snake: Snake, grid: Grid, depth: bool = False, goal_age: Optional[int] = 5, flood_fill: bool = True) -> Optional[deque[tuple[int, int]]]: 
         """
         Find the least costing path from the snake's current position to the best goal tile, considering `Tiles.VISITED` tiles with an age of at least 2. Uses a variant of Dijkstra's algorithm to find paths in a grid.
 
@@ -55,7 +56,7 @@ class Exploration:
         self.goal_age = goal_age
 
         # Super Food Cost
-        self.tile_costs[Tiles.SUPER] = 0 if snake.eat_super_food else 25
+        self.tile_costs[Tiles.SUPER] = 0 if snake.eat_super_food else 100
         
         # Flood Fill threshold
         if flood_fill:
@@ -91,9 +92,9 @@ class Exploration:
         first_goal_depth = 0  # Tracks the depth of the first goal found
         
         while open_list:
-            if flood_fill_threshold and (time.time() - get_start_time()) * 1000 > 90: 
+            if flood_fill_threshold and (time.time() - get_start_time()) * 1000 > 80: 
                 print("Exit due to computational time")
-                break # Exit cycle if the computation time exceeds 85ms  
+                break # Exit cycle if the computation time exceeds 80ms  
             
             current_cost, current_pos, current_dir, current_body, current_depth = heapq.heappop(open_list)
             
@@ -244,7 +245,7 @@ class Exploration:
     def get_tile_cost(self, tile_value: Union[Tiles, tuple[Tiles, int]]) -> int:
         """Return the cost associated with a tile."""
         if isinstance(tile_value, tuple) and tile_value[0] == Tiles.VISITED:
-            return self.tile_costs[Tiles.VISITED] - max(0, min(4, tile_value[1] / 5))  # Use the default cost for VISITED tiles (can adjust based on age if needed)
+            return self.tile_costs[Tiles.VISITED] - max(0, min(6, tile_value[1] / 20))  # Use the default cost for VISITED tiles (can adjust based on age if needed)
         return self.tile_costs.get(tile_value, self.default_cost)
 
 
