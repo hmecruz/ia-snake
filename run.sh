@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# if a error appears saying 'Permission denied' when trying to run the script, run this in the terminal: chmod +x run.sh
-
 # Caminho do diretório atual
 DIR="$(cd "$(dirname "$0")" && pwd)"
 

@@ -22,6 +22,7 @@ class Tiles(IntEnum):
     VISITED = 5
     BLOCKED = 6
     ENEMY = 7
+    ENEMY_SUPPOSITION = 8
 
 
 class SuperFood(IntEnum):

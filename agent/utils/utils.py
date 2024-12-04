@@ -1,6 +1,12 @@
+import time
 from consts import Direction, Tiles
 
-from ..grid import Grid
+def set_start_time():
+    global start_time
+    start_time = time.time()
+
+def get_start_time():
+    return start_time
 
 def determine_direction(
         current_pos: tuple[int, int], next_pos: tuple[int, int], grid_size: tuple[int, int]
@@ -79,6 +85,28 @@ def compute_next_position(pos: tuple[int, int], direction: Direction, grid_size:
     
     return (new_x, new_y)
 
+
+def compute_position_from_vector(pos: tuple[int, int], vector: tuple[int, int], grid_size: tuple[int, int], grid_traverse: bool) -> tuple[int, int]:
+    """Computes the next position based on a position and a vector (dx, dy)."""
+    x, y = pos
+    dx, dy = vector  # Extract the vector components
+
+    # Calculate the new position
+    new_x, new_y = x + dx, y + dy
+
+    grid_width, grid_height = grid_size
+
+    # Apply wrap-around if grid_traverse is enabled
+    new_x %= grid_width
+    new_y %= grid_height
+    
+    if not (0 <= new_x < grid_width) or not (0 <= new_y < grid_height):
+        raise ValueError(
+            f"Next position {new_x, new_y} is out of bounds in a grid of size {grid_size}. "
+            f"Current position: {pos}, Vector: {vector}. "
+        )
+    
+    return (new_x, new_y)
 
 def compute_body(next_pos: tuple[int, int], body: list[tuple[int, int]]) -> list[tuple[int, int]]:
     new_body = [next_pos] + body[:-1]  # Add new head and remove the last element (tail)
