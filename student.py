@@ -149,7 +149,7 @@ def update_snake_grid(state: dict, snake: Snake, grid: Grid):
     
     # Always update snake first
     snake.update(pos, direction, body, sight, range)
-    grid.update(pos, snake.prev_body, snake.body, snake.sight, traverse, step)
+    grid.update(snake, traverse, step)
     snake_mode(snake, grid.food, grid.super_food, traverse, range, step)
 
 

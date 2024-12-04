@@ -3,6 +3,8 @@ import copy
 
 from typing import Union, Optional
 
+from .utils.utils import compute_position_from_vector
+
 from consts import Tiles, Direction
 
 class Grid:
@@ -159,12 +161,12 @@ class Grid:
         return self.grid[x][y]
     
 
-    def update(self, pos: tuple[int, int], prev_body: list[list[int]], body: list[list[int]], sight: dict[int, dict[int, Tiles]], traverse: bool, step: int):    
+    def update(self, snake, traverse: bool, step: int):    
         self.traverse = traverse
-        self._update_visited_tiles(sight, step) 
-        eat_food, eat_super_food = self._update_food(pos, sight)
-        self._update_snake_body(pos, prev_body, body, eat_food, eat_super_food)
-        self._update_enemy_snake_body(body, sight)
+        self._update_visited_tiles(snake.sight, step) 
+        eat_food, eat_super_food = self._update_food(snake.position, snake.sight)
+        self._update_snake_body(snake.position, snake.prev_body, snake.body, eat_food, eat_super_food)
+        self._update_enemy_snake_body(snake.position, snake.direction, snake.body, snake.sight)
 
         
     def _update_food(self, pos: tuple[int, int], sight: dict[int, dict[int, Tiles]]) -> bool:
@@ -228,7 +230,7 @@ class Grid:
         self.ate_super_food = True if eat_super_food == True else False
 
     
-    def _update_enemy_snake_body(self, body: list[list[int]], sight: dict[int, dict[int, Tiles]]):
+    def _update_enemy_snake_body(self, pos: tuple[int, int], direction: Direction, body: list[list[int]], sight: dict[int, dict[int, Tiles]]):
         """Updates the snake's enemy body on the grid based on snake's sight."""
         
         # Clear previous enemy body
@@ -243,6 +245,35 @@ class Grid:
                 if tile == Tiles.SNAKE and (x, y) not in body:
                     self.grid[x][y] = Tiles.ENEMY
                     self.prev_enemy_body.add((x, y))
+        
+        # Enemy position consider as danger
+        danger_enemy_positions = {
+            Direction.NORTH: [(-1, -1), (1, -1)],  
+            Direction.SOUTH: [(-1, 1), (1, 1)],    
+            Direction.EAST:  [(1, -1), (1, 1)],      
+            Direction.WEST:  [(-1, -1), (-1, 1)],   
+        }
+
+        # Possible enemy position if enemy is in a danger position
+        possible_enemy_next_move = {
+            Direction.NORTH: (0, -1),
+            Direction.SOUTH: (0, 1),
+            Direction.WEST: (-1, 0),
+            Direction.EAST: (1, 0)
+        }
+        
+        # Calculate the enemy danger positions based on the snake's direction
+        offsets = danger_enemy_positions.get(direction)
+        if not offsets:
+            raise ValueError(f"Invalid direction: {direction}")
+    
+        for offset in offsets:
+            x, y = compute_position_from_vector(pos, offset, self.size, self.traverse)
+            if (x, y) in self.prev_enemy_body:
+                x, y = possible_enemy_next_move.get(direction)
+                self.grid[x][y] = Tiles.ENEMY
+                self.prev_enemy_body.add((x, y))
+                return
 
         
     def update_snake_body(self, prev_body: set[tuple[int, int]], body: list[tuple[int, int]]):
