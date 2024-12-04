@@ -24,7 +24,7 @@ class Exploration:
         self.tile_costs = tile_costs or {
             Tiles.VISITED: 7,
             Tiles.STONE: 10,
-            Tiles.ENEMY_SUPPOSITION: 100,
+            Tiles.ENEMY_SUPPOSITION: 500,
         }
         self.default_cost = 5
         self.safety = Safety()
@@ -86,7 +86,7 @@ class Exploration:
         first_goal_depth = 0  # Tracks the depth of the first goal found
         
         while open_list:
-            if flood_fill_threshold and (time.time() - get_start_time()) * 1000 > 90: 
+            if flood_fill_threshold and (time.time() - get_start_time()) * 1000 > 85: 
                 print("Exit due to computational time")
                 break # Exit cycle if the computation time exceeds 85ms  
             

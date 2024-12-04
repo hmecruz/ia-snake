@@ -23,13 +23,13 @@ class Eating:
             "food": {
                 Tiles.STONE: 1,
                 Tiles.VISITED: 1,
-                Tiles.ENEMY_SUPPOSITION: 100,
+                Tiles.ENEMY_SUPPOSITION: 500,
                 Tiles.FOOD: 0,
             },
             "super_food": {
                 Tiles.STONE: 10,
                 Tiles.VISITED: 7, # minus age --> Tile.VISITED [1, 7] cost range --> Useful for longer paths
-                Tiles.ENEMY_SUPPOSITION: 100,
+                Tiles.ENEMY_SUPPOSITION: 500,
                 Tiles.FOOD: 0,
                 Tiles.SUPER: 0,
             },
@@ -56,6 +56,8 @@ class Eating:
             
         for goal in goals_queue:
             goal_type = "food" if goal in grid.food else "super_food"
+            if grid.get_tile(goal) == Tiles.ENEMY_SUPPOSITION: # Avoid making a danger move
+                continue
             path = self.compute_goal_path(snake, grid, goal, goal_type, flood_fill_threshold)
             if path is not None:
                 return path

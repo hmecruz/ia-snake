@@ -82,10 +82,12 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                 elif path_counter >= path_clear_threshold:
                     path.clear()
                 elif path:
-                    print("Entrei")
+                    # Prevent making impossible or danger moves due to enemies imprevisibility
                     direction = determine_direction(snake.position, path[0], grid.size)
                     x, y = grid.calculate_pos(snake.position, direction)
                     if grid.get_tile((x, y)) == Tiles.ENEMY_SUPPOSITION:
+                        path.clear()
+                    if grid.get_tile((x, y)) == Tiles.ENEMY:
                         path.clear()
 
                 # Path Calculation
@@ -132,7 +134,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
                 return
-            #except ValueError:
+            except ValueError:
                 if path:   
                    path.clear()
             except Exception as e:

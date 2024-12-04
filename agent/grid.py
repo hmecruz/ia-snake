@@ -165,9 +165,8 @@ class Grid:
         self.traverse = traverse
         self._update_visited_tiles(snake.sight, step) 
         eat_food, eat_super_food = self._update_food(snake.position, snake.sight)
-        self._update_snake_body(snake.position, snake.prev_body, snake.body, eat_food, eat_super_food)
         self._update_enemy_snake_body(snake.position, snake.direction, snake.body, snake.sight)
-
+        self._update_snake_body(snake.position, snake.prev_body, snake.body, eat_food, eat_super_food)
         
     def _update_food(self, pos: tuple[int, int], sight: dict[int, dict[int, Tiles]]) -> bool:
         """Update the food and super food positions on the grid."""
@@ -239,34 +238,70 @@ class Grid:
         
         self.prev_enemy_body.clear()
 
+        enemies_exist = False
         # Mark the current enemy body
         for x, y_tile in sight.items():
             for y, tile in y_tile.items():
                 if tile == Tiles.SNAKE and (x, y) not in body:
                     self.grid[x][y] = Tiles.ENEMY
                     self.prev_enemy_body.add((x, y))
+                    enemies_exist = True
+
+        if enemies_exist == False: return
         
-        # Enemy position considered as danger --> Front, Right and Left
+        """
         danger_enemy_positions = {
+            Direction.NORTH: [(0, -2), (-1, -1), (1, -1), (-1, 1), (1, 1)],  
+            Direction.SOUTH: [(0, 2), (-1, 1), (1, 1), (-1, -1), (1, -1)],    
+            Direction.EAST:  [(2, 0), (1, -1), (1, 1), (-1, -1), (-1, 1)],      
+            Direction.WEST:  [(-2, 0), (-1, -1), (-1, 1), (1, -1), (1, 1)],   
+        }
+        """
+
+        # Enemy position considered as danger --> Front, Right and Left
+        danger_enemy_positions_front = {
             Direction.NORTH: [(0, -2), (-1, -1), (1, -1)],  
             Direction.SOUTH: [(0, 2), (-1, 1), (1, 1)],    
             Direction.EAST:  [(2, 0), (1, -1), (1, 1)],      
             Direction.WEST:  [(-2, 0), (-1, -1), (-1, 1)],   
         }
 
+        # Enemy position considered as danger --> Back, Right and Left
+        danger_enemy_positions_back = {
+            Direction.NORTH: [(-1, 1), (1, 1)],  
+            Direction.SOUTH: [(-1, -1), (1, -1)],    
+            Direction.EAST:  [(-1, -1), (-1, 1)],      
+            Direction.WEST:  [(1, -1), (1, 1)],   
+        }
+
         # Calculate the enemy danger positions based on the snake's direction
-        offsets = danger_enemy_positions.get(direction)
-        if not offsets:
+        offsets_front = danger_enemy_positions_front.get(direction)
+        if not offsets_front:
             raise ValueError(f"Invalid direction: {direction}")
-    
-        for offset in offsets:
+
+        offsets_back = danger_enemy_positions_back.get(direction)
+        if not offsets_back:
+            raise ValueError(f"Invalid direction: {direction}")
+
+        for offset in offsets_front:
             x, y = compute_position_from_vector(pos, offset, self.size, self.traverse)
             if (x, y) in self.prev_enemy_body:
                 possible_enemy_next_move = compute_next_position(pos, direction, self.size, self.traverse)
                 x, y = possible_enemy_next_move
+                tile = self.get_tile((x, y))
+                if tile == Tiles.SNAKE or tile == Tiles.ENEMY: continue
                 self.grid[x][y] = Tiles.ENEMY_SUPPOSITION
                 self.prev_enemy_body.add((x, y))
-                return
+
+        for offset in offsets_back:
+            x, y = compute_position_from_vector(pos, offset, self.size, self.traverse)
+            if (x, y) in self.prev_enemy_body:
+                possible_enemy_next_move = compute_next_position((x, y), direction, self.size, self.traverse)
+                x, y = possible_enemy_next_move
+                tile = self.get_tile((x, y))
+                if tile == Tiles.SNAKE or tile == Tiles.ENEMY: continue
+                self.grid[x][y] = Tiles.ENEMY_SUPPOSITION
+                self.prev_enemy_body.add((x, y))
 
         
     def update_snake_body(self, prev_body: set[tuple[int, int]], body: list[tuple[int, int]]):

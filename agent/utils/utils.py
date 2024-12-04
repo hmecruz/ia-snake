@@ -97,9 +97,8 @@ def compute_position_from_vector(pos: tuple[int, int], vector: tuple[int, int], 
     grid_width, grid_height = grid_size
 
     # Apply wrap-around if grid_traverse is enabled
-    if grid_traverse:
-        new_x %= grid_width
-        new_y %= grid_height
+    new_x %= grid_width
+    new_y %= grid_height
     
     if not (0 <= new_x < grid_width) or not (0 <= new_y < grid_height):
         raise ValueError(
