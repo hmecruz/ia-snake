@@ -42,7 +42,7 @@ class Grid:
         copied._stones = copy.deepcopy(self._stones, memo)
         copied._food = copy.deepcopy(self._food, memo)
         copied._super_food = copy.deepcopy(self._super_food, memo)
-        copied._traverse = self._traverse  # If _traverse doesn't need deep copying, just copy the reference
+        copied._traverse = self._traverse  
 
         # Optionally, you can also copy other dynamic attributes if they exist
         copied._ate_food = self._ate_food
@@ -173,6 +173,7 @@ class Grid:
         eat_food, eat_super_food = self._update_food(snake.position, snake.sight)
         self._update_enemy_snake_body(snake.position, snake.direction, snake.body, snake.sight)
         self._update_snake_body(snake.position, snake.prev_body, snake.body, eat_food, eat_super_food)
+
         
     def _update_food(self, pos: tuple[int, int], sight: dict[int, dict[int, Tiles]]) -> bool:
         """Update the food and super food positions on the grid."""
