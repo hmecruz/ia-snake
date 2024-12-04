@@ -16,7 +16,7 @@ from agent.search.eating import Eating
 
 from agent.utils.utils import determine_direction, convert_sight, set_start_time, get_start_time
 
-from consts import Mode
+from consts import Mode, Tiles
 
 async def agent_loop(server_address="localhost:8000", agent_name="student", file_name=None):
     async with websockets.connect(f"ws://{server_address}/player") as websocket:
@@ -81,6 +81,12 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                     path.clear() # Clear path if new super food is found and eat super food is True. Allows for path recalculation for closer super foods
                 elif path_counter >= path_clear_threshold:
                     path.clear()
+                elif path:
+                    print("Entrei")
+                    direction = determine_direction(snake.position, path[0], grid.size)
+                    x, y = grid.calculate_pos(snake.position, direction)
+                    if grid.get_tile((x, y)) == Tiles.ENEMY_SUPPOSITION:
+                        path.clear()
 
                 # Path Calculation
                 if not path: # List if empty
@@ -126,8 +132,9 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
                 return
-            except ValueError:
-                path.clear()
+            #except ValueError:
+                if path:   
+                   path.clear()
             except Exception as e:
                 grid.print_grid(snake.position)
                 if file_name:

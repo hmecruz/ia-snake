@@ -23,7 +23,8 @@ class Exploration:
 
         self.tile_costs = tile_costs or {
             Tiles.VISITED: 7,
-            Tiles.STONE: 10
+            Tiles.STONE: 10,
+            Tiles.ENEMY_SUPPOSITION: 100,
         }
         self.default_cost = 5
         self.safety = Safety()

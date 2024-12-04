@@ -23,11 +23,13 @@ class Eating:
             "food": {
                 Tiles.STONE: 1,
                 Tiles.VISITED: 1,
+                Tiles.ENEMY_SUPPOSITION: 100,
                 Tiles.FOOD: 0,
             },
             "super_food": {
                 Tiles.STONE: 10,
                 Tiles.VISITED: 7, # minus age --> Tile.VISITED [1, 7] cost range --> Useful for longer paths
+                Tiles.ENEMY_SUPPOSITION: 100,
                 Tiles.FOOD: 0,
                 Tiles.SUPER: 0,
             },

@@ -3,7 +3,7 @@ import copy
 
 from typing import Union, Optional
 
-from .utils.utils import compute_position_from_vector
+from .utils.utils import compute_next_position, compute_position_from_vector
 
 from consts import Tiles, Direction
 
@@ -246,22 +246,14 @@ class Grid:
                     self.grid[x][y] = Tiles.ENEMY
                     self.prev_enemy_body.add((x, y))
         
-        # Enemy position consider as danger
+        # Enemy position considered as danger --> Front, Right and Left
         danger_enemy_positions = {
-            Direction.NORTH: [(-1, -1), (1, -1)],  
-            Direction.SOUTH: [(-1, 1), (1, 1)],    
-            Direction.EAST:  [(1, -1), (1, 1)],      
-            Direction.WEST:  [(-1, -1), (-1, 1)],   
+            Direction.NORTH: [(0, -2), (-1, -1), (1, -1)],  
+            Direction.SOUTH: [(0, 2), (-1, 1), (1, 1)],    
+            Direction.EAST:  [(2, 0), (1, -1), (1, 1)],      
+            Direction.WEST:  [(-2, 0), (-1, -1), (-1, 1)],   
         }
 
-        # Possible enemy position if enemy is in a danger position
-        possible_enemy_next_move = {
-            Direction.NORTH: (0, -1),
-            Direction.SOUTH: (0, 1),
-            Direction.WEST: (-1, 0),
-            Direction.EAST: (1, 0)
-        }
-        
         # Calculate the enemy danger positions based on the snake's direction
         offsets = danger_enemy_positions.get(direction)
         if not offsets:
@@ -270,8 +262,9 @@ class Grid:
         for offset in offsets:
             x, y = compute_position_from_vector(pos, offset, self.size, self.traverse)
             if (x, y) in self.prev_enemy_body:
-                x, y = possible_enemy_next_move.get(direction)
-                self.grid[x][y] = Tiles.ENEMY
+                possible_enemy_next_move = compute_next_position(pos, direction, self.size, self.traverse)
+                x, y = possible_enemy_next_move
+                self.grid[x][y] = Tiles.ENEMY_SUPPOSITION
                 self.prev_enemy_body.add((x, y))
                 return
 
@@ -369,6 +362,8 @@ class Grid:
             return not self.traverse
         if tile_type == Tiles.SNAKE or tile_type == Tiles.ENEMY:
             return True
+        if tile_type == Tiles.ENEMY_SUPPOSITION:
+            return False
         if tile_type in [Tiles.FOOD, Tiles.SUPER]:
             return False
 
@@ -435,7 +430,8 @@ class Grid:
             Tiles.SUPER:   "S",
             Tiles.SNAKE:   "B",
             Tiles.VISITED: ".",
-            Tiles.ENEMY:   "E"
+            Tiles.ENEMY:   "E", 
+            Tiles.ENEMY_SUPPOSITION: "M"
         }
 
         for y in range(self.ver_tiles): 
