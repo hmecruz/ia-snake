@@ -82,8 +82,8 @@ class Grid:
     
     @traverse.setter
     def traverse(self, traverse: bool):
-        if not isinstance(traverse, bool):
-            raise ValueError(f"Invalid value for traverse: {traverse}. Expected a boolean.")
+        #if not isinstance(traverse, bool):
+        #    raise ValueError(f"Invalid value for traverse: {traverse}. Expected a boolean.")
         self._traverse = traverse
 
     @property
@@ -96,8 +96,8 @@ class Grid:
 
     @enemies_exist.setter
     def enemies_exist(self, enemies_exist: bool):
-        if not isinstance(enemies_exist, bool):
-            raise ValueError(f"Invalid value for enemies_exist: {enemies_exist}. Expected a boolean value.")
+        #if not isinstance(enemies_exist, bool):
+        #    raise ValueError(f"Invalid value for enemies_exist: {enemies_exist}. Expected a boolean value.")
         self._enemies_exist = enemies_exist
 
     @property
@@ -106,8 +106,8 @@ class Grid:
     
     @ate_food.setter
     def ate_food(self, ate_food: bool):
-        if not isinstance(ate_food, bool):
-            raise ValueError(f"Invalid value for ate_food: {ate_food}. Expected a boolean.")
+        #if not isinstance(ate_food, bool):
+        #    raise ValueError(f"Invalid value for ate_food: {ate_food}. Expected a boolean.")
         self._ate_food = ate_food
 
     @property
@@ -116,8 +116,8 @@ class Grid:
 
     @ate_super_food.setter
     def ate_super_food(self, duration: int):
-        if not isinstance(duration, int) or duration < 0:
-            raise ValueError(f"Invalid value for ate_super_food: {duration}. Expected a non-negative integer.")
+        #if not isinstance(duration, int) or duration < 0:
+        #    raise ValueError(f"Invalid value for ate_super_food: {duration}. Expected a non-negative integer.")
         self._ate_super_food = duration
 
     @property
@@ -126,8 +126,8 @@ class Grid:
 
     @age_update_rate.setter
     def age_update_rate(self, rate: int):
-        if not isinstance(rate, int) or rate < 1:
-            raise ValueError(f"Invalid value for age_update_rate: {rate}. Expected an integer greater than or equal to 1.")
+        #if not isinstance(rate, int) or rate < 1:
+        #   raise ValueError(f"Invalid value for age_update_rate: {rate}. Expected an integer greater than or equal to 1.")
         self._age_update_rate = rate
 
     @property
@@ -136,8 +136,8 @@ class Grid:
 
     @slow_down_effect.setter
     def slow_down_effect(self, slow_down_effect: int):
-        if not isinstance(slow_down_effect, int) or slow_down_effect < 0:
-            raise ValueError(f"Invalid value for slow_down_effect: {slow_down_effect}. Expected a non negative integer.")
+        #if not isinstance(slow_down_effect, int) or slow_down_effect < 0:
+        #    raise ValueError(f"Invalid value for slow_down_effect: {slow_down_effect}. Expected a non negative integer.")
         self._slow_down_effect = slow_down_effect
     
 
@@ -289,7 +289,7 @@ class Grid:
                     self.grid[x][y] = Tiles.ENEMY_SUPPOSITION
                     self.prev_enemy_body.add(surrounding_pos)
 
-        print(f"Enemy head {enemy_heads}")
+        #print(f"Enemy head {enemy_heads}")
 
         
     def update_snake_body(self, prev_body: set[tuple[int, int]], body: list[tuple[int, int]]):

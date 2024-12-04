@@ -64,7 +64,6 @@ class Eating:
             if path is not None:
                 return path
 
-        print(f"Eating: No path found")
         return None
 
 

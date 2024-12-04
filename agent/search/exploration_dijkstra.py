@@ -61,13 +61,11 @@ class Exploration:
             flood_fill_threshold = snake.size * (1.4 if snake.size >= 80 else 1.8)
         else:
             flood_fill_threshold = None
-        print(f"Flood Fill Threshold: {flood_fill_threshold}")
 
         path = self.compute_goal_path(snake, grid, depth, flood_fill_threshold)
         if path is not None:
             return path
 
-        print(f"Exploration: No path found")
         return None
 
 

@@ -19,7 +19,7 @@ from agent.utils.utils import determine_direction, convert_sight, set_start_time
 
 from consts import Mode, Tiles
 
-async def agent_loop(server_address="localhost:8000", agent_name="student", file_name=None):
+async def agent_loop(server_address="localhost:8000", agent_name="student"):
     async with websockets.connect(f"ws://{server_address}/player") as websocket:
         await websocket.send(json.dumps({"cmd": "join", "name": agent_name}))
 
@@ -39,20 +39,13 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
         prev_food_positions = None
         prev_super_food_positions = None
 
-        food_counter = 1
-        food_step = 0
-        steps_per_food = deque()
-
         path_counter = 0
         path_clear_threshold = 2 # Path clear if path counter is bigger or equal to path_clear_threshold
         
         while True:
             try:
-                print("\n--------------------------------------------\n")
                 state = json.loads(await websocket.recv()) 
                 set_start_time()
-
-                current_step = state["step"]
 
                 # Previous Assignments
                 prev_mode = snake.mode
@@ -60,21 +53,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                 prev_super_food_positions = grid.super_food.copy() # Shallow copy, elements inside are tuples (immutable)
 
                 update_snake_grid(state, snake, grid)
-                
-                print(f"Snake Position: {snake.position}")
-                print(f"Snake Direction: {snake.direction._name_}")
-                print(f"Grid Traverse: {grid.traverse}")
-                print(f"Sight Range: {snake.range}")
-                print(f"Snake Mode: {snake.mode._name_}")
-                print(f"Foods: {grid.food}")
-                #print(f"Previous Foods: {prev_food_positions}")
-                print(f"Super Foods: {grid.super_food}")
-                print(f"Eat Super Food: {snake.eat_super_food}")
-                #print(f"Snake Body: {snake.body}")
-                #print(f"Snake Body: {snake.prev_body}")
-                print(f"Snake Size: {snake.size}")
 
-                #Path Clearence Conditions
+                # Path Clearence Conditions
                 # TODO --> Make this a function in the future if it gets bigger (it will)
                 if path:
                     if prev_mode != snake.mode:
@@ -101,35 +81,16 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                     if not path: 
                         snake.mode = Mode.SURVIVAL # Fallback mode
                         path = survival.get_path(snake, grid, 2)
-                        #path = exploration.get_path(snake, grid, True, 1.1, flood_fill=False) # Request a new path to follow as last resort till death circle is implemented
                         
-                    path_counter = 0
+                    path_counter = 0 # Path counter reset
 
-                print(f"Path: {path}")
                 
                 if path:
                     direction = determine_direction(snake.position, path.popleft(), grid.size)
                     key = snake.move(direction)
                 
-
-                # Graph to keep the track of average food per step
-                if file_name and grid.ate_food:
-                    (food_counter, current_step - food_step)
-                    steps_per_food.append((food_counter, current_step - food_step))
-                    food_step = current_step
-                    food_counter += 1
-
-                # Debug
-                print(f"Key: {key}")  
                 path_counter = path_counter + 1
-                grid.print_grid(snake.position) 
-                
-                # Processing time
-                end_time = time.time()
-                duration_ms = (end_time - get_start_time()) * 1000
-                print(f"Processing time: {duration_ms:.2f} ms")
-                print(f"Step: {state["step"]}")
-                
+
                 await websocket.send(json.dumps({"cmd": "key", "key": key}))  
                 
             except websockets.exceptions.ConnectionClosedOK:
@@ -138,11 +99,11 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
             except ValueError:
                 if path:   
                    path.clear()
-            except Exception as e:
-                grid.print_grid(snake.position)
-                if file_name:
-                    export_steps_per_food(file_name, steps_per_food)
-                raise e
+            except Exception:
+                if path:
+                   path.clear()
+            except Exception:
+                pass
                 
 
 def update_snake_grid(state: dict, snake: Snake, grid: Grid):
@@ -181,21 +142,6 @@ def snake_mode(snake: Snake, grid_food: set[tuple[int, int]], grid_super_food: s
     else:
         snake.mode = Mode.EXPLORATION  # Default to exploration mode
 
-def export_steps_per_food(file_name: str, steps_per_food: deque[tuple[int, int]]):
-    dir = './data'
-    os.makedirs(dir, exist_ok=True)
-
-    file_path = os.path.join(dir, file_name)
-
-    with open(file_path, 'a') as json_file:
-        json.dump(list(steps_per_food), json_file, indent=4)
-        json_file.write("\n") 
-    
-    print(f"Steps data saved to {file_path}")
-
-
-# TODO --> Uncomment this for the delivery
-"""
 # DO NOT CHANGE THE LINES BELLOW
 # You can change the default values using the command line, example:
 # $ NAME='arrumador' python3 client.py
@@ -204,18 +150,3 @@ SERVER = os.environ.get("SERVER", "localhost")
 PORT = os.environ.get("PORT", "8000")
 NAME = os.environ.get("NAME", getpass.getuser())
 loop.run_until_complete(agent_loop(f"{SERVER}:{PORT}", NAME))
-"""
-
-
-# TODO --> Comment this for the delivery
-if __name__ == "__main__":
-    # Parse command line arguments for file name
-    parser = argparse.ArgumentParser(description="Run Snake agent")
-    parser.add_argument('-out', '--output', type=str, required=False, help="Output file name for steps data")
-    args = parser.parse_args()
-
-loop = asyncio.get_event_loop()
-SERVER = os.environ.get("SERVER", "localhost")
-PORT = os.environ.get("PORT", "8000")
-NAME = os.environ.get("NAME", getpass.getuser())
-loop.run_until_complete(agent_loop(f"{SERVER}:{PORT}", NAME, args.output))

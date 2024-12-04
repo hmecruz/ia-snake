@@ -38,8 +38,8 @@ class Snake:
     
     @position.setter
     def position(self, new_position: tuple[int, int]):
-        if not isinstance(new_position, tuple) or len(new_position) != 2:
-            raise ValueError(f"Invalid position format: Expected a tuple (x, y) with two integer values, but received {new_position}.")
+        #if not isinstance(new_position, tuple) or len(new_position) != 2:
+        #    raise ValueError(f"Invalid position format: Expected a tuple (x, y) with two integer values, but received {new_position}.")
         self._pos = new_position
         
     @property
@@ -48,8 +48,8 @@ class Snake:
     
     @direction.setter
     def direction(self, new_direction: Direction):
-        if not isinstance(new_direction, Direction):
-            raise ValueError(f"Invalid direction: Expected a Direction enum value, but received {new_direction}.")
+        #if not isinstance(new_direction, Direction):
+        #    raise ValueError(f"Invalid direction: Expected a Direction enum value, but received {new_direction}.")
         self._dir = new_direction
 
     @property
@@ -66,11 +66,11 @@ class Snake:
     
     @body.setter
     def body(self, new_body: list[list[int]]):
-        if not (
-            isinstance(new_body, list) and 
-            all(isinstance(part, list) and len(part) == 2 and all(isinstance(coord, int) for coord in part) for part in new_body)
-        ):
-            raise ValueError(f"Invalid body format: Expected a list of [x, y] positions with integer values, but received {new_body}.")
+        #if not (
+        #    isinstance(new_body, list) and 
+        #    all(isinstance(part, list) and len(part) == 2 and all(isinstance(coord, int) for coord in part) for part in new_body)
+        #):
+        #    raise ValueError(f"Invalid body format: Expected a list of [x, y] positions with integer values, but received {new_body}.")
         self._body = [tuple(segment) for segment in new_body]
 
 
@@ -84,8 +84,8 @@ class Snake:
     
     @sight.setter
     def sight(self, new_sight: dict[int, dict[int, Tiles]]):
-        if not isinstance(new_sight, dict):
-            raise ValueError(f"Invalid sight format: Expected a dictionary of dictionaries with Tiles, but received {new_sight}.")
+        #if not isinstance(new_sight, dict):
+        #    raise ValueError(f"Invalid sight format: Expected a dictionary of dictionaries with Tiles, but received {new_sight}.")
         self._sight = new_sight
     
     @property
@@ -94,8 +94,8 @@ class Snake:
     
     @range.setter
     def range(self, new_range: int):
-        if not isinstance(new_range, int) or new_range < 2 or new_range > 6:
-            raise ValueError(f"Invalid range value: Expected a integer between 2 and 6 inclusive, but received {new_range}.")
+        #if not isinstance(new_range, int) or new_range < 2 or new_range > 6:
+        #    raise ValueError(f"Invalid range value: Expected a integer between 2 and 6 inclusive, but received {new_range}.")
         self._range = new_range
 
     @property
@@ -104,9 +104,9 @@ class Snake:
     
     @mode.setter
     def mode(self, new_mode: Mode):
-        if not isinstance(new_mode, Mode):
-            raise ValueError(f"Invalid mode: Expected a Mode enum value, but received {new_mode}.")
-        self._mode= new_mode
+        #if not isinstance(new_mode, Mode):
+        #    raise ValueError(f"Invalid mode: Expected a Mode enum value, but received {new_mode}.")
+        self._mode = new_mode
 
     @property
     def eat_super_food(self) -> bool:
@@ -114,8 +114,8 @@ class Snake:
     
     @eat_super_food.setter
     def eat_super_food(self, eat_super_food: bool):
-        if not isinstance(eat_super_food, bool):
-            raise ValueError(f"Invalid eat_super_food: Expected a Boolean, but received {eat_super_food}.")
+        #if not isinstance(eat_super_food, bool):
+        #    raise ValueError(f"Invalid eat_super_food: Expected a Boolean, but received {eat_super_food}.")
         self._eat_super_food = eat_super_food
     
 
