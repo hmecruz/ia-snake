@@ -8,6 +8,10 @@ class Snake:
         self._dir: Direction = None
         self._prev_body: list[tuple[int, int]] = None
         self._body: list[tuple[int, int]] = None
+
+        # added
+        self._previous_sight: dict[int, dict[int, Tiles]] = None
+
         self._sight: dict[int, dict[int, Tiles]] = None
         self._range: int = None
         self._mode: Mode = None
@@ -27,6 +31,10 @@ class Snake:
         copied._dir = self._dir
         copied._mode = self._mode
         copied._body = copy.deepcopy(self._body, memo)
+
+        # added
+        copied._previous_sight = copy.deepcopy(self._previous_sight, memo)
+
         copied._sight = copy.deepcopy(self._sight, memo)
         copied._range = self._range
         copied._eat_super_food = self._eat_super_food
@@ -82,10 +90,19 @@ class Snake:
     def sight(self) -> dict[int, dict[int, Tiles]]:
         return self._sight
     
+    # added
+    @property
+    def previous_sight(self) -> dict[int, dict[int, Tiles]]:
+        return self._previous_sight
+    
     @sight.setter
     def sight(self, new_sight: dict[int, dict[int, Tiles]]):
         if not isinstance(new_sight, dict):
             raise ValueError(f"Invalid sight format: Expected a dictionary of dictionaries with Tiles, but received {new_sight}.")
+        
+        # added
+        self._previous_sight = self._sight
+
         self._sight = new_sight
     
     @property
@@ -133,6 +150,10 @@ class Snake:
         self.direction = dir
         self.prev_body = self.body
         self.body = body
+
+        # added
+        self.previous_sight = self.sight
+
         self.sight = sight
         self.range = range
         self.eat_super_food = eat_super_food
