@@ -46,6 +46,9 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
         path_counter = 0
         path_clear_threshold = 2 # Path clear if path counter is bigger or equal to path_clear_threshold
         
+        # added
+        enemy_snake_distance = None
+
         while True:
             try:
                 print("\n--------------------------------------------\n")
@@ -59,6 +62,31 @@ async def agent_loop(server_address="localhost:8000", agent_name="student", file
                 prev_food_positions = grid.food.copy() # Shallow copy, elements inside are tuples (immutable)
                 prev_super_food_positions = grid.super_food.copy() # Shallow copy, elements inside are tuples (immutable)
 
+                # added
+                # calculated in Manhattan distance
+                # enemy positions in current and previous sight
+                previous_enemy_positions = set()
+                current_enemy_positons = set()
+                enemy_positions_in_both = set()
+                minimum_previous_distance = None
+                minimum_current_distance = None
+                for i in len(snake.sight()):
+                    for j in len(snake.sight()[i]):
+                        if snake._sight()[i][j] == 'E':
+                            pos1 = snake.position()
+                            minimum_current_distance = abs(pos1[0] - i) + abs(pos1[1] - j)
+                            current_enemy_positons.add((i,j))
+                for i in len(snake.previous_sight()):
+                    for j in len(snake.previous_sight()[i]):
+                        if snake._previous_sight[i][j] == 'E':
+                            pos2 = snake.prev_body()[0]
+                            minimum_previous_distance = abs(pos2[0] - i) + abs(pos2[1] - j)
+                            previous_enemy_positions.add((i,j))
+                for i in previous_enemy_positions:
+                    if i in current_enemy_positons:
+                        enemy_positions_in_both.add(i)
+                
+                    
                 update_snake_grid(state, snake, grid)
                 
                 print(f"Snake Position: {snake.position}")
@@ -150,6 +178,7 @@ def update_snake_grid(state: dict, snake: Snake, grid: Grid):
     body = state["body"]
     pos = tuple(body[0])
     direction = determine_direction(body[1], body[0], grid.size)
+    #prev_sight = None
     sight = state["sight"]
     sight = convert_sight(sight) 
     range = state["range"]
