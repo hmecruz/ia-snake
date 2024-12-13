@@ -1,6 +1,6 @@
 from typing import Optional
 
-from consts import Direction
+from .consts import Direction
 
 from collections import deque
 from .grid import Grid

@@ -4,7 +4,7 @@ import copy
 from collections import deque
 from typing import Optional
 
-from consts import Direction
+from ..consts import Direction
 
 from ..snake import Snake
 from ..grid import Grid

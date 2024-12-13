@@ -1,6 +1,6 @@
 from collections import deque
 
-from consts import Tiles, Direction
+from ..consts import Tiles, Direction
 
 from ..snake import Snake
 from ..grid import Grid

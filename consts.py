@@ -1,4 +1,4 @@
-from enum import Enum, IntEnum
+from enum import IntEnum
 
 HISTORY_LEN = 10
 
@@ -19,10 +19,6 @@ class Tiles(IntEnum):
     FOOD = 2
     SUPER = 3
     SNAKE = 4
-    VISITED = 5
-    BLOCKED = 6
-    ENEMY = 7
-    ENEMY_SUPPOSITION = 8
 
 
 class SuperFood(IntEnum):
@@ -44,12 +40,3 @@ class Direction(IntEnum):
     EAST = 1
     SOUTH = 2
     WEST = 3
-    
-
-class Mode(IntEnum):
-    EXPLORATION = 0 # Searching for food or enemy snake 
-    EATING = 1 # Trying to reach food
-    ATTACK = 2 # Attack other snakes
-    DEFEND = 3 # Defend against other snakes
-    SURVIVAL = 4 # Just try to survive by not getting trapped
-    REGROUP = 5 # Snake regroups if its too spread 

@@ -17,7 +17,7 @@ from agent.search.death_circle import Survival
 
 from agent.utils.utils import determine_direction, convert_sight, set_start_time, get_start_time
 
-from consts import Mode, Tiles
+from agent.consts import Mode, Tiles
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
     async with websockets.connect(f"ws://{server_address}/player") as websocket:

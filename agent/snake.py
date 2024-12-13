@@ -1,6 +1,6 @@
 import copy
 
-from consts import Direction, Mode, Tiles
+from .consts import Direction, Mode, Tiles
 
 class Snake:
     def __init__(self):

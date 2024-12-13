@@ -5,7 +5,7 @@ from typing import Union, Optional
 
 from .utils.utils import compute_next_position, compute_position_from_vector
 
-from consts import Tiles, Direction
+from .consts import Tiles, Direction
 
 class Grid:
     def __init__(self, size: tuple[int, int], grid: list[list], age_update_rate: int = 1, slow_down_effect: int = 0):

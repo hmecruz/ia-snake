@@ -1,5 +1,5 @@
 import time
-from consts import Direction, Tiles
+from ..consts import Direction, Tiles
 
 def set_start_time():
     global start_time

@@ -5,7 +5,7 @@ import heapq
 from collections import deque
 from typing import Optional, Union
 
-from consts import Direction, Tiles
+from ..consts import Direction, Tiles
 
 from ..snake import Snake
 from ..grid import Grid
