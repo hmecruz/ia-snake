@@ -98,6 +98,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 enemy_previous_supposed_positions = set()
                 enemy_current_positions = set()
                 enemy_current_supposed_positions = set()
+                enemy_positions_in_both = set()
+                enemy_positions_in_one = set()
                 if snake.prev_sight != None:
                     for i in snake._prev_sight:
                         for j in snake._prev_sight[i]:
@@ -114,8 +116,18 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                             elif snake._sight[i][j] == Tiles.ENEMY_SUPPOSITION:
                                 enemy_current_supposed_positions.add((i, j))
                 
-                print(enemy_previous_positions)
-                print(enemy_current_positions)
+                for i in enemy_previous_positions:
+                    if i in enemy_current_positions:
+                        enemy_positions_in_both.add(i)
+                    else:
+                        enemy_positions_in_one.add(i)
+
+                for i in enemy_current_positions:
+                    if i  not in enemy_previous_positions:
+                        enemy_positions_in_one.add(i)
+
+                print(enemy_positions_in_both)
+                print(enemy_positions_in_one)
                 
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
