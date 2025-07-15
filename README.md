@@ -1,35 +1,73 @@
 # ia-snakes
 Snakes clone for AI teaching
 
-## How to install
+## Project Description
+
+The game is based on the traditional Snake game with some modifications. Details about these changes and the project requirements can be found in the IA_Snake.pdf file located in the root directory.
+
+### AI Snake Game Agent
+
+- Designed and implemented an AI agent for a customized version of the classic Snake game, achieving the highest score in the annual AI course competition at UA DETI.
+- Integrated and adapted pathfinding algorithms such as Dijkstra, BFS, and A* to optimize gameplay strategies.
+
+## How to Install
 
 Make sure you are running Python 3.11.
 
-`$ pip install -r requirements.txt`
+```bash
+$ python3 -m venv venv
+$ source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+$ pip install -r requirements.txt
+```
 
-*Tip: you might want to create a virtualenv first*
+## How to Play
 
-## How to play
+Open 3 terminals and run the following commands:
 
-open 3 terminals:
+```bash
+$ python3 server.py
+$ python3 viewer.py
+$ python3 student.py
+```
 
-`$ python3 server.py`
+`student.py` runs the AI agent code developed for the game.
 
-`$ python3 viewer.py`
+To play using the sample client, make sure the client pygame hidden window has focus and run the following:
 
-`$ python3 client.py`
+```bash
+$ python3 server.py
+$ python3 viewer.py
+$ python3 client.py
+```
 
-to play using the sample client make sure the client pygame hidden window has focus
+## 🕹️ Playing on a Local Server with Multiple Agents
 
-### Keys
+You can run the game locally and control multiple agents (snakes). Follow these steps:
 
-Directions: arrows
+1. **Start the server** (replace `x` with the number of players you want):
 
-## Debug Installation
+   ```bash
+   python server.py --players x
+   ```
 
-Make sure pygame is properly installed:
+   Example for 2 players:
 
-python -m pygame.examples.aliens
+   ```bash
+   python server.py --players 2
+   ```
 
-# Tested on:
-- MacOS 15.0.1
+2. **Run the game viewer** in another terminal:
+
+   ```bash
+   python viewer.py
+   ```
+
+3. **Start each agent (student bot)** in separate terminals.  
+   Each player **must have a unique name**:
+
+   ```bash
+   NAME=player1 python student.py
+   NAME=player2 python student.py
+   ```
+
+   ✅ You can use any name you like, as long as all player names are different.
